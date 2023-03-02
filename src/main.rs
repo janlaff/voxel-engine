@@ -3,35 +3,11 @@ use std::ffi::CString;
 use gl::types::*;
 use glfw::Context;
 
-unsafe fn compile_shader(shader: GLuint, source_code: &str) -> Result<(), String> {
-    let raw_str = CString::new(source_code).unwrap();
+mod program;
+mod shader;
 
-    gl::ShaderSource(shader, 1, &raw_str.as_ptr(), std::ptr::null());
-    gl::CompileShader(shader);
-
-    let mut result: GLint = 0;
-    gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut result);
-
-    if result != 1 {
-        let mut log_len: GLint = 0;
-        gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut log_len);
-
-        let mut buffer = Vec::with_capacity(log_len as usize + 1);
-        buffer.extend([b' '].iter().cycle().take(log_len as usize));
-
-        let error: CString = CString::from_vec_unchecked(buffer);
-        gl::GetShaderInfoLog(
-            shader,
-            log_len,
-            std::ptr::null_mut(),
-            error.as_ptr() as *mut GLchar,
-        );
-
-        Err(error.to_string_lossy().into_owned())
-    } else {
-        Ok(())
-    }
-}
+use program::*;
+use shader::*;
 
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -53,20 +29,15 @@ fn main() {
     gl::load_with(|s| window.get_proc_address(s) as *const _);
 
     unsafe {
-        let shader = gl::CreateShader(gl::COMPUTE_SHADER);
-        compile_shader(shader, include_str!("red.comp")).unwrap();
+        let program =
+            Program::new(&[
+                Shader::from_glsl(gl::COMPUTE_SHADER, include_str!("red.comp")).unwrap(),
+            ])
+            .unwrap();
 
-        let program = gl::CreateProgram();
-        gl::AttachShader(program, shader);
-        gl::LinkProgram(program);
-        gl::UseProgram(program);
+        program.set_used();
 
-        let mut group_size: [GLint; 3] = [0; 3];
-        gl::GetProgramiv(
-            program,
-            gl::COMPUTE_WORK_GROUP_SIZE,
-            group_size.as_mut_ptr(),
-        );
+        let group_size = program.work_group_size();
 
         let mut output_texture: GLuint = 0;
         gl::GenTextures(1, &mut output_texture);
