@@ -1,5 +1,5 @@
 use gl::types::*;
-use std::ffi::CString;
+use std::ffi::{c_void, CString};
 
 pub struct Shader(pub GLuint);
 
@@ -19,13 +19,30 @@ impl Shader {
         Ok(Self(shader))
     }
 
-    #[allow(dead_code, unused_variables)]
     pub unsafe fn from_spirv(
         kind: GLenum,
         spirv_bytes: &[u8],
         entry_point: &str,
     ) -> Result<Self, String> {
-        unimplemented!()
+        let shader = gl::CreateShader(kind);
+
+        // Load SPIR-V binary
+        gl::ShaderBinary(
+            1,
+            &shader,
+            gl::SHADER_BINARY_FORMAT_SPIR_V,
+            spirv_bytes.as_ptr() as *mut c_void,
+            spirv_bytes.len() as i32,
+        );
+
+        // Specialization is equal to compilation
+        let temp = CString::new(entry_point).unwrap();
+        gl::SpecializeShader(shader, temp.as_ptr(), 0, std::ptr::null(), std::ptr::null());
+
+        // Check that specialization was successful
+        check_compile_status(shader)?;
+
+        Ok(Self(shader))
     }
 }
 
