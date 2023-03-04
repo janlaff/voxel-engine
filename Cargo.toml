@@ -1,11 +1,14 @@
-[package]
-name = "voxel-engine"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = [
+    "voxel-engine",
+    "voxel-engine-gl",
+    "voxel-engine-shader",
+]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-bytemuck = { version = "1.13.1", features = ["derive"] }
-glfw = { version = "0.51.0", features = ["wayland"] }
-gl = "0.14.0"
+# Compile build-dependencies in release mode with
+# the same settings as regular dependencies.
+[profile.release.build-override]
+opt-level = 3
+codegen-units = 16
+[profile.dev.build-override]
+opt-level = 3

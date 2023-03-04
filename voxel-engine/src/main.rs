@@ -1,5 +1,3 @@
-use std::ffi::CString;
-
 use gl::types::*;
 use glfw::Context;
 
@@ -8,6 +6,8 @@ mod shader;
 
 use program::*;
 use shader::*;
+
+const SHADER: &[u8] = include_bytes!(env!("voxel_engine_shader.spv"));
 
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -31,7 +31,7 @@ fn main() {
     unsafe {
         let program =
             Program::new(&[
-                Shader::from_glsl(gl::COMPUTE_SHADER, include_str!("red.comp")).unwrap(),
+                Shader::from_spirv(gl::COMPUTE_SHADER, SHADER, "main_cs").unwrap(),
             ])
             .unwrap();
 
