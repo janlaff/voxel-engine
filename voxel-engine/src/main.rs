@@ -1,11 +1,20 @@
+use std::ffi::c_void;
+
+use bytemuck::bytes_of;
 use gl::types::*;
 use glfw::Context;
 
 mod program;
 mod shader;
+mod uniform;
 
 use program::*;
 use shader::*;
+use uniform::*;
+use voxel_engine_shader::{
+    glam::{Mat4, Vec3},
+    RayCamera,
+};
 
 const SHADER: &[u8] = include_bytes!(env!("voxel_engine_shader.spv"));
 
@@ -22,22 +31,43 @@ fn main() {
         .unwrap();
 
     let (mut width, mut height) = window.get_framebuffer_size();
+    let mut aspect_ratio = width as f32 / height as f32;
 
     window.make_current();
     glfw.set_swap_interval(glfw::SwapInterval::None);
 
     gl::load_with(|s| window.get_proc_address(s) as *const _);
 
+    let mut projection = Mat4::perspective_lh(45_f32.to_radians(), aspect_ratio, 0.1, 100.0);
+    let mut inverse_projection = projection.inverse();
+
+    let view = Mat4::look_at_lh(
+        Vec3::splat(3.0),
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+    );
+    let mut inverse_view = view.inverse();
+    let mut inverse_centered_view = inverse_view;
+
+    inverse_centered_view.col_mut(3).x = 0.0;
+    inverse_centered_view.col_mut(3).y = 0.0;
+    inverse_centered_view.col_mut(3).z = 0.0;
+
     unsafe {
         let program =
-            Program::new(&[
-                Shader::from_spirv(gl::COMPUTE_SHADER, SHADER, "main_cs").unwrap(),
-            ])
-            .unwrap();
+            Program::new(&[Shader::from_spirv(gl::COMPUTE_SHADER, SHADER, "main_cs").unwrap()])
+                .unwrap();
 
         program.set_used();
 
         let group_size = program.work_group_size();
+        let mut camera_buffer = UniformBuffer::new(1);
+        let mut camera = RayCamera {
+            inverse_view,
+            inverse_centered_view,
+            inverse_projection,
+        };
+        camera_buffer.write(bytes_of(&camera));
 
         let mut output_texture: GLuint = 0;
         gl::GenTextures(1, &mut output_texture);
@@ -131,6 +161,12 @@ fn main() {
                             gl::FLOAT,
                             std::ptr::null(),
                         );
+
+                        aspect_ratio = width as f32 / height as f32;
+                        camera.inverse_projection =
+                            Mat4::perspective_lh(45_f32.to_radians(), aspect_ratio, 0.1, 100.0)
+                                .inverse();
+                        camera_buffer.write(bytes_of(&camera));
                     }
                     _ => {}
                 }
