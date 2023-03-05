@@ -4,45 +4,45 @@ use std::ffi::{c_void, CString};
 pub struct Shader(pub GLuint);
 
 impl Shader {
-    pub unsafe fn from_glsl(kind: GLenum, glsl_src_code: &str) -> Result<Self, String> {
-        let shader = gl::CreateShader(kind);
+    pub fn from_glsl(kind: GLenum, glsl_src_code: &str) -> Result<Self, String> {
+        unsafe {
+            let shader = gl::CreateShader(kind);
 
-        // Load source code
-        let temp = CString::new(glsl_src_code).unwrap();
-        gl::ShaderSource(shader, 1, &temp.as_ptr(), std::ptr::null());
+            // Load source code
+            let temp = CString::new(glsl_src_code).unwrap();
+            gl::ShaderSource(shader, 1, &temp.as_ptr(), std::ptr::null());
 
-        gl::CompileShader(shader);
+            gl::CompileShader(shader);
 
-        // Check that compilation was succesful
-        check_compile_status(shader)?;
+            // Check that compilation was succesful
+            check_compile_status(shader)?;
 
-        Ok(Self(shader))
+            Ok(Self(shader))
+        }
     }
 
-    pub unsafe fn from_spirv(
-        kind: GLenum,
-        spirv_bytes: &[u8],
-        entry_point: &str,
-    ) -> Result<Self, String> {
-        let shader = gl::CreateShader(kind);
+    pub fn from_spirv(kind: GLenum, spirv_bytes: &[u8], entry_point: &str) -> Result<Self, String> {
+        unsafe {
+            let shader = gl::CreateShader(kind);
 
-        // Load SPIR-V binary
-        gl::ShaderBinary(
-            1,
-            &shader,
-            gl::SHADER_BINARY_FORMAT_SPIR_V,
-            spirv_bytes.as_ptr() as *mut c_void,
-            spirv_bytes.len() as i32,
-        );
+            // Load SPIR-V binary
+            gl::ShaderBinary(
+                1,
+                &shader,
+                gl::SHADER_BINARY_FORMAT_SPIR_V,
+                spirv_bytes.as_ptr() as *mut c_void,
+                spirv_bytes.len() as i32,
+            );
 
-        // Specialization is equal to compilation
-        let temp = CString::new(entry_point).unwrap();
-        gl::SpecializeShader(shader, temp.as_ptr(), 0, std::ptr::null(), std::ptr::null());
+            // Specialization is equal to compilation
+            let temp = CString::new(entry_point).unwrap();
+            gl::SpecializeShader(shader, temp.as_ptr(), 0, std::ptr::null(), std::ptr::null());
 
-        // Check that specialization was successful
-        check_compile_status(shader)?;
+            // Check that specialization was successful
+            check_compile_status(shader)?;
 
-        Ok(Self(shader))
+            Ok(Self(shader))
+        }
     }
 }
 

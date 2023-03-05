@@ -27,7 +27,7 @@ fn main() {
     ));
 
     let (mut window, events) = glfw
-        .create_window(800, 600, "framb", glfw::WindowMode::Windowed)
+        .create_window(800, 600, "voxel-engine", glfw::WindowMode::Windowed)
         .unwrap();
 
     let (mut width, mut height) = window.get_framebuffer_size();
@@ -53,22 +53,23 @@ fn main() {
     inverse_centered_view.col_mut(3).y = 0.0;
     inverse_centered_view.col_mut(3).z = 0.0;
 
+    let program =
+        Program::new(&[Shader::from_spirv(gl::COMPUTE_SHADER, SHADER, "main_cs").unwrap()])
+            .unwrap();
+
+    program.set_used();
+
+    let group_size = program.work_group_size();
+
+    let mut camera = RayCamera {
+        inverse_view,
+        inverse_centered_view,
+        inverse_projection,
+    };
+    let mut camera_buffer = UniformBuffer::new(1);
+    camera_buffer.write(bytes_of(&camera));
+
     unsafe {
-        let program =
-            Program::new(&[Shader::from_spirv(gl::COMPUTE_SHADER, SHADER, "main_cs").unwrap()])
-                .unwrap();
-
-        program.set_used();
-
-        let group_size = program.work_group_size();
-        let mut camera_buffer = UniformBuffer::new(1);
-        let mut camera = RayCamera {
-            inverse_view,
-            inverse_centered_view,
-            inverse_projection,
-        };
-        camera_buffer.write(bytes_of(&camera));
-
         let mut output_texture: GLuint = 0;
         gl::GenTextures(1, &mut output_texture);
         gl::ActiveTexture(gl::TEXTURE0);

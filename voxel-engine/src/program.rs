@@ -5,34 +5,37 @@ use std::ffi::CString;
 pub struct Program(pub GLuint);
 
 impl Program {
-    pub unsafe fn new(shaders: &[Shader]) -> Result<Self, String> {
-        let program = gl::CreateProgram();
+    pub fn new(shaders: &[Shader]) -> Result<Self, String> {
+        unsafe {
+            let program = gl::CreateProgram();
 
-        // Attach shaders to the program
-        shaders.iter().for_each(|s| gl::AttachShader(program, s.0));
+            // Attach shaders to the program
+            shaders.iter().for_each(|s| gl::AttachShader(program, s.0));
 
-        gl::LinkProgram(program);
+            gl::LinkProgram(program);
 
-        // Detach shaders from the program
-        shaders.iter().for_each(|s| gl::DetachShader(program, s.0));
+            // Detach shaders from the program
+            shaders.iter().for_each(|s| gl::DetachShader(program, s.0));
 
-        // Check that linking was succesful
-        check_link_status(program)?;
+            // Check that linking was succesful
+            check_link_status(program)?;
 
-        Ok(Self(program))
+            Ok(Self(program))
+        }
     }
 
-    pub unsafe fn set_used(&self) {
-        gl::UseProgram(self.0);
+    pub fn set_used(&self) {
+        unsafe {
+            gl::UseProgram(self.0);
+        }
     }
 
-    pub unsafe fn work_group_size(&self) -> [GLint; 3] {
+    pub fn work_group_size(&self) -> [GLint; 3] {
         let mut group_size: [GLint; 3] = [0; 3];
-        gl::GetProgramiv(
-            self.0,
-            gl::COMPUTE_WORK_GROUP_SIZE,
-            group_size.as_mut_ptr(),
-        );
+
+        unsafe {
+            gl::GetProgramiv(self.0, gl::COMPUTE_WORK_GROUP_SIZE, group_size.as_mut_ptr());
+        }
 
         group_size
     }

@@ -20,11 +20,9 @@ impl RayCamera {
     fn create_ray(&self, screen_coords: &Vec2) -> Ray {
         Ray {
             origin: (self.inverse_view * Vec4::new(0.0, 0.0, 0.0, 1.0)).xyz(),
-            direction: (
-                self.inverse_centered_view
+            direction: (self.inverse_centered_view
                 * self.inverse_projection
-                * Vec4::from((*screen_coords, 0.0, 1.0))
-                )
+                * Vec4::from((*screen_coords, 0.0, 1.0)))
             .xyz(),
         }
     }
@@ -53,7 +51,7 @@ fn intersect_box(ray: &Ray, center: &Vec3, extent: f32) -> bool {
 
     let t_near = t1.x.max(t1.y).max(t1.z);
     let t_far = t2.x.min(t2.y).min(t2.z);
-    
+
     t_near <= t_far
 }
 
@@ -70,6 +68,7 @@ pub fn main_cs(
     #[spirv(global_invocation_id)] id: UVec3,
     #[spirv(binding = 0)] output: &mut StorageImage2d,
     #[spirv(uniform, binding = 1)] camera: &RayCamera,
+    #[spirv(storage_buffer, binding = 2)] octree: &[u32],
 ) {
     let output_size: UVec2 = output.query_size();
     let output_coords = id.xy();
