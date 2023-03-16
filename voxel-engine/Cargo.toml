@@ -12,4 +12,4 @@ gl = { package = "voxel-engine-gl", path = "../voxel-engine-gl" }
 voxel-engine-shader = { path = "../voxel-engine-shader" }
 
 [build-dependencies]
-spirv-builder = "0.5.0"
+spirv-builder = "0.6.0"
