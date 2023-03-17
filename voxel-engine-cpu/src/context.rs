@@ -1,4 +1,4 @@
-use crate::device_selection::find_device;
+use crate::gpu_model::{find_gpu_model, GpuModel};
 use std::sync::Arc;
 use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
 use vulkano::device::{
@@ -13,9 +13,8 @@ use winit::window::{Window, WindowBuilder};
 
 pub struct Context {
     pub instance: Arc<Instance>,
-    pub device: Arc<Device>,
-    pub queue: Arc<Queue>,
     pub surface: Arc<Surface>,
+    pub gpu: GpuModel,
 }
 
 impl Context {
@@ -42,13 +41,12 @@ impl Context {
             .build_vk_surface(&event_loop, instance.clone())
             .unwrap();
 
-        let (physical, device, queue) = find_device(&instance, &surface);
+        let gpu_instance = find_gpu_model(&instance, &surface);
 
         Self {
             instance,
-            device,
-            queue,
             surface,
+            gpu: gpu_instance,
         }
     }
 

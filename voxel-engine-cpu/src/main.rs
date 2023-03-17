@@ -3,7 +3,7 @@ mod camera;
 mod command;
 mod compute;
 mod context;
-mod device_selection;
+mod gpu_model;
 mod swapchain;
 
 use allocators::*;
@@ -11,7 +11,7 @@ use camera::*;
 use command::*;
 use compute::*;
 use context::*;
-use device_selection::*;
+use gpu_model::*;
 use swapchain::*;
 
 use voxel_engine_gpu::glam::{Vec2, Vec3};
@@ -34,7 +34,7 @@ fn run_app() {
         .with_resizable(false);
 
     let ctx = Context::new(&event_loop, window_builder);
-    let allocators = Allocators::new(&ctx.device);
+    let allocators = Allocators::new(&ctx.gpu.device);
 
     let screen_size_u = (
         ctx.window().inner_size().width,
@@ -45,7 +45,7 @@ fn run_app() {
 
     let mut camera = Camera::new(Vec3::splat(3.0), Vec3::splat(0.0), screen_size_f);
 
-    let (swapchain, images) = create_swapchain(&ctx.device, &ctx.surface, screen_size_u);
+    let (swapchain, images) = create_swapchain(&ctx.gpu.device, &ctx.surface, screen_size_u);
 
     let octree = vec![
         OctreeNodeBuilder::new()
@@ -86,7 +86,13 @@ fn run_app() {
             .build(),
     ];
 
-    let compute = Compute::new(&ctx.device, &ctx.queue, screen_size_u, octree, &allocators);
+    let compute = Compute::new(
+        &ctx.gpu.device,
+        &ctx.gpu.queue,
+        screen_size_u,
+        octree,
+        &allocators,
+    );
 
     {
         let mut writer = compute.camera_buffer.write().unwrap();
@@ -94,8 +100,8 @@ fn run_app() {
     }
 
     let command_buffers = record_command_buffers(
-        &ctx.device,
-        &ctx.queue,
+        &ctx.gpu.device,
+        &ctx.gpu.queue,
         &compute.pipeline,
         &images,
         &allocators.command_buffer,
@@ -139,15 +145,15 @@ fn run_app() {
                     Err(e) => panic!("Failed to acquire next image: {:?}", e),
                 };
 
-            let execution = sync::now(ctx.device.clone())
+            let execution = sync::now(ctx.gpu.device.clone())
                 .join(acquire_future)
                 .then_execute(
-                    ctx.queue.clone(),
+                    ctx.gpu.queue.clone(),
                     command_buffers[image_index as usize].clone(),
                 )
                 .unwrap()
                 .then_swapchain_present(
-                    ctx.queue.clone(),
+                    ctx.gpu.queue.clone(),
                     SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index),
                 )
                 .then_signal_fence_and_flush();

@@ -16,10 +16,13 @@ const DEVICE_FEATURES: Features = Features {
     ..Features::empty()
 };
 
-pub fn find_device(
-    instance: &Arc<Instance>,
-    surface: &Arc<Surface>,
-) -> (Arc<PhysicalDevice>, Arc<Device>, Arc<Queue>) {
+pub struct GpuModel {
+    pub physical: Arc<PhysicalDevice>,
+    pub device: Arc<Device>,
+    pub queue: Arc<Queue>,
+}
+
+pub fn find_gpu_model(instance: &Arc<Instance>, surface: &Arc<Surface>) -> GpuModel {
     let (physical, queue_family_index) = instance
         .enumerate_physical_devices()
         .expect("Failed to enumerate physical devices")
@@ -43,7 +46,11 @@ pub fn find_device(
     .map(|(device, mut queues)| (device, queues.next().unwrap()))
     .expect("Failed to create logical device");
 
-    (physical, device, queue)
+    GpuModel {
+        physical,
+        device,
+        queue,
+    }
 }
 
 fn physical_device_supported(physical: &Arc<PhysicalDevice>) -> bool {
