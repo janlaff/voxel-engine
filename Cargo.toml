@@ -1,8 +1,7 @@
 [workspace]
 members = [
-    "voxel-engine",
-    "voxel-engine-gl",
-    "voxel-engine-shader",
+    "voxel-engine-cpu",
+    "voxel-engine-gpu",
 ]
 
 # Compile build-dependencies in release mode with
@@ -12,3 +11,6 @@ opt-level = 3
 codegen-units = 16
 [profile.dev.build-override]
 opt-level = 3
+
+[profile.dev]
+opt-level = 1

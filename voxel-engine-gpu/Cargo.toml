@@ -1,5 +1,5 @@
 [package]
-name = "voxel-engine-shader"
+name = "voxel-engine-gpu"
 version = "0.1.0"
 edition = "2021"
 
