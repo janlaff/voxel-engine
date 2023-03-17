@@ -1,33 +1,22 @@
 mod allocators;
 mod camera;
+mod command;
 mod compute;
 mod context;
+mod swapchain;
 
 use allocators::*;
 use camera::*;
+use command::*;
 use compute::*;
 use context::*;
-
-use std::default::Default;
-use std::sync::Arc;
+use swapchain::*;
 
 use voxel_engine_gpu::glam::{Vec2, Vec3};
 use voxel_engine_gpu::OctreeNodeBuilder;
-use vulkano::command_buffer::allocator::StandardCommandBufferAllocator;
-use vulkano::command_buffer::{
-    AutoCommandBufferBuilder, BlitImageInfo, CommandBufferUsage, PrimaryAutoCommandBuffer,
-};
-use vulkano::descriptor_set::allocator::StandardDescriptorSetAlloc;
-use vulkano::descriptor_set::PersistentDescriptorSet;
-use vulkano::device::{Device, Queue};
-use vulkano::format::Format;
-use vulkano::image::{ImageAccess, ImageUsage, StorageImage, SwapchainImage};
-use vulkano::pipeline::{ComputePipeline, Pipeline, PipelineBindPoint};
-use vulkano::swapchain::{
-    PresentMode, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
-};
+use vulkano::swapchain::SwapchainPresentInfo;
+use vulkano::sync;
 use vulkano::sync::GpuFuture;
-use vulkano::{swapchain, sync};
 use winit::event::{DeviceEvent, ElementState, Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{CursorIcon, WindowBuilder};
@@ -36,7 +25,6 @@ fn main() {
     let event_loop = EventLoop::new();
     let window_builder = WindowBuilder::new()
         .with_title("rfox")
-        .with_maximized(true)
         .with_resizable(false);
 
     let ctx = Context::new(&event_loop, window_builder);
@@ -140,7 +128,7 @@ fn main() {
         },
         Event::MainEventsCleared => {
             let (image_index, suboptimal, acquire_future) =
-                match swapchain::acquire_next_image(swapchain.clone(), None) {
+                match vulkano::swapchain::acquire_next_image(swapchain.clone(), None) {
                     Ok(r) => r,
                     Err(e) => panic!("Failed to acquire next image: {:?}", e),
                 };
@@ -169,90 +157,4 @@ fn main() {
         }
         _ => {}
     });
-}
-
-fn record_command_buffers(
-    device: &Arc<Device>,
-    queue: &Arc<Queue>,
-    pipeline: &Arc<ComputePipeline>,
-    images: &Vec<Arc<SwapchainImage>>,
-    command_buffer_allocator: &StandardCommandBufferAllocator,
-    compute_image_set: &Arc<PersistentDescriptorSet<StandardDescriptorSetAlloc>>,
-    compute_image: &Arc<StorageImage>,
-) -> Vec<Arc<PrimaryAutoCommandBuffer>> {
-    images
-        .iter()
-        .map(|swapchain_image| {
-            let mut builder = AutoCommandBufferBuilder::primary(
-                command_buffer_allocator,
-                queue.queue_family_index(),
-                CommandBufferUsage::MultipleSubmit,
-            )
-            .unwrap();
-
-            builder
-                .bind_pipeline_compute(pipeline.clone())
-                .bind_descriptor_sets(
-                    PipelineBindPoint::Compute,
-                    pipeline.layout().clone(),
-                    0,
-                    compute_image_set.clone(),
-                )
-                .dispatch([
-                    swapchain_image.dimensions().width() / 10,
-                    swapchain_image.dimensions().height() / 10,
-                    1,
-                ])
-                .unwrap()
-                .blit_image(BlitImageInfo::images(
-                    compute_image.clone(),
-                    swapchain_image.clone(),
-                ))
-                .unwrap();
-
-            Arc::new(builder.build().unwrap())
-        })
-        .collect()
-}
-
-fn create_swapchain(
-    device: &Arc<Device>,
-    surface: &Arc<Surface>,
-    screen_size: (u32, u32),
-) -> (Arc<Swapchain>, Vec<Arc<SwapchainImage>>) {
-    let caps = device
-        .physical_device()
-        .surface_capabilities(surface, Default::default())
-        .expect("Failed to get surface capabilities");
-
-    let composite_alpha = caps.supported_composite_alpha.iter().next().unwrap();
-
-    let format = *device
-        .physical_device()
-        .surface_formats(surface, Default::default())
-        .unwrap()
-        .iter()
-        .find(|(f, c)| *f == Format::B8G8R8A8_SRGB)
-        .unwrap();
-    //.for_each(|(f, c)| println!("{:?} {:?}", *f, *c));
-
-    Swapchain::new(
-        device.clone(),
-        surface.clone(),
-        SwapchainCreateInfo {
-            min_image_count: caps.min_image_count + 1,
-            image_format: Some(format.0),
-            image_color_space: format.1,
-            image_extent: [screen_size.0, screen_size.1],
-            image_usage: ImageUsage {
-                transfer_dst: true,
-                ..Default::default()
-            },
-            present_mode: PresentMode::Mailbox,
-            clipped: false,
-            composite_alpha,
-            ..Default::default()
-        },
-    )
-    .unwrap()
 }
