@@ -1,21 +1,21 @@
 #![no_std]
 
+mod intersect;
+mod inverse_camera;
+mod octree;
 mod ray;
 mod sky;
-mod octree;
-mod inverse_camera;
-mod intersect;
 
+pub use glam;
+pub use intersect::*;
+pub use inverse_camera::*;
+pub use octree::*;
 pub use ray::*;
 pub use sky::*;
-pub use octree::*;
-pub use inverse_camera::*;
-pub use intersect::*;
-pub use glam;
 
-use spirv_std::{Image, spirv};
 use glam::{IVec2, Mat4, UVec2, UVec3, Vec2, Vec2Swizzles, Vec3, Vec3Swizzles, Vec4, Vec4Swizzles};
 use spirv_std::num_traits::Float;
+use spirv_std::{spirv, Image};
 
 fn trace_ray(ray: &Ray) -> Vec3 {
     let mut hit = false;
@@ -95,7 +95,11 @@ fn simple_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
         return stack[9].center;
     }
 
-    stack[0] = Stack { index, center, scale: scale * 0.5 };
+    stack[0] = Stack {
+        index,
+        center,
+        scale: scale * 0.5,
+    };
 
     while stack_pos > 0 {
         stack_pos -= 1;
@@ -125,7 +129,7 @@ fn simple_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
             }
 
             if leaf {
-                return Vec3::new(1.0, 0.0, 0.0);//vec3(hit.distance) / 10;
+                return Vec3::new(1.0, 0.0, 0.0); //vec3(hit.distance) / 10;
             } else {
                 break;
                 //stack[stack_pos] = Stack { index: child_ptr as usize, center: new_center, scale: scale * 0.5 };
@@ -139,7 +143,7 @@ fn simple_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
 #[spirv(compute(threads(10, 10, 1)))]
 pub fn main_cs(
     #[spirv(global_invocation_id)] id: UVec3,
-    #[spirv(descriptor_set = 0, binding = 0)] image: &Image!(2D, format=rgba32f, sampled=false),
+    #[spirv(descriptor_set = 0, binding = 0)] image: &Image!(2D, format = rgba32f, sampled = false),
     #[spirv(descriptor_set = 0, binding = 1, uniform)] camera: &InverseCamera,
     #[spirv(descriptor_set = 0, binding = 2, storage_buffer)] octree: &[OctreeNode],
 ) {

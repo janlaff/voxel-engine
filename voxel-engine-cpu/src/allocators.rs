@@ -15,7 +15,7 @@ impl Allocators {
         Self {
             memory: StandardMemoryAllocator::new_default(device.clone()),
             command_buffer: StandardCommandBufferAllocator::new(device.clone(), Default::default()),
-            descriptor_set: StandardDescriptorSetAllocator::new(device.clone())
+            descriptor_set: StandardDescriptorSetAllocator::new(device.clone()),
         }
     }
 }

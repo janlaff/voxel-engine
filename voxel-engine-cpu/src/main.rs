@@ -1,37 +1,36 @@
-mod context;
+mod allocators;
 mod camera;
 mod compute;
-mod allocators;
+mod context;
 
-use context::*;
+use allocators::*;
 use camera::*;
 use compute::*;
-use allocators::*;
+use context::*;
 
 use std::default::Default;
 use std::sync::Arc;
 
-use vulkano::command_buffer::{AutoCommandBufferBuilder, BlitImageInfo, CommandBufferUsage, PrimaryAutoCommandBuffer};
-use vulkano::command_buffer::allocator::{StandardCommandBufferAllocator};
-use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
-use vulkano::descriptor_set::allocator::{StandardDescriptorSetAlloc, StandardDescriptorSetAllocator};
-use vulkano::format::Format;
-use vulkano::image::{ImageAccess, ImageAspects, ImageSubresourceRange, ImageUsage, StorageImage, SwapchainImage};
-use vulkano::image::view::{ImageView, ImageViewCreateInfo};
-use vulkano::memory::allocator::StandardMemoryAllocator;
-use vulkano::pipeline::{ComputePipeline, Pipeline, PipelineBindPoint};
-use vulkano::{swapchain, sync};
-use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
-use vulkano::device::{Device, Queue};
-use vulkano::shader::ShaderModule;
-use vulkano::shader::spirv::Instruction::All;
-use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo};
-use vulkano::sync::GpuFuture;
-use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::{CursorGrabMode, CursorIcon, Window, WindowBuilder};
-use winit::event::{ButtonId, DeviceEvent, ElementState, Event, WindowEvent};
 use voxel_engine_gpu::glam::{Vec2, Vec3};
 use voxel_engine_gpu::OctreeNodeBuilder;
+use vulkano::command_buffer::allocator::StandardCommandBufferAllocator;
+use vulkano::command_buffer::{
+    AutoCommandBufferBuilder, BlitImageInfo, CommandBufferUsage, PrimaryAutoCommandBuffer,
+};
+use vulkano::descriptor_set::allocator::StandardDescriptorSetAlloc;
+use vulkano::descriptor_set::PersistentDescriptorSet;
+use vulkano::device::{Device, Queue};
+use vulkano::format::Format;
+use vulkano::image::{ImageAccess, ImageUsage, StorageImage, SwapchainImage};
+use vulkano::pipeline::{ComputePipeline, Pipeline, PipelineBindPoint};
+use vulkano::swapchain::{
+    PresentMode, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
+};
+use vulkano::sync::GpuFuture;
+use vulkano::{swapchain, sync};
+use winit::event::{DeviceEvent, ElementState, Event, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop};
+use winit::window::{CursorIcon, WindowBuilder};
 
 fn main() {
     let event_loop = EventLoop::new();
@@ -45,45 +44,55 @@ fn main() {
 
     let screen_size_u = (
         ctx.window().inner_size().width,
-        ctx.window().inner_size().height
+        ctx.window().inner_size().height,
     );
 
-    let screen_size_f = (
-        screen_size_u.0 as f32,
-        screen_size_u.1 as f32
-    );
+    let screen_size_f = (screen_size_u.0 as f32, screen_size_u.1 as f32);
 
-    let mut camera = Camera::new(
-        Vec3::splat(3.0),
-        Vec3::splat(0.0),
-        screen_size_f
-    );
+    let mut camera = Camera::new(Vec3::splat(3.0), Vec3::splat(0.0), screen_size_f);
 
-    let (swapchain, images) = create_swapchain(
-        &ctx.device,
-        &ctx.surface,
-        screen_size_u
-    );
+    let (swapchain, images) = create_swapchain(&ctx.device, &ctx.surface, screen_size_u);
 
     let octree = vec![
-        OctreeNodeBuilder::new().valid(0b10101010).leaf(0b00100000).build(),
-        OctreeNodeBuilder::new().valid(0b11111111).leaf(0b11111111).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
-        OctreeNodeBuilder::new().valid(0b00000000).leaf(0b00000000).build(),
+        OctreeNodeBuilder::new()
+            .valid(0b10101010)
+            .leaf(0b00100000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b00000000)
+            .leaf(0b00000000)
+            .build(),
     ];
 
-    let compute = Compute::new(
-        &ctx.device,
-        &ctx.queue,
-        screen_size_u,
-        octree,
-        &allocators
-    );
+    let compute = Compute::new(&ctx.device, &ctx.queue, screen_size_u, octree, &allocators);
 
     {
         let mut writer = compute.camera_buffer.write().unwrap();
@@ -101,71 +110,64 @@ fn main() {
     );
 
     let mut dragging = false;
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            }
-            Event::DeviceEvent { event, .. } => match event {
-                DeviceEvent::MouseMotion { delta } => {
-                    if dragging {
-                        camera.arcball_rotate(
-                            Vec2::new(delta.0 as f32, delta.1 as f32),
-                            screen_size_f
-                        );
-
-                        let mut writer = compute.camera_buffer.write().unwrap();
-                        *writer = camera.inverse();
-                    }
-                }
-                DeviceEvent::Button { button: 1, state } => match state {
-                    ElementState::Pressed => {
-                        dragging = true;
-                        ctx.window().set_cursor_icon(CursorIcon::Move);
-                    },
-                    ElementState::Released => {
-                        dragging = false;
-                        ctx.window().set_cursor_icon(CursorIcon::Default);
-                    }
-                }
-                _ => {}
-            }
-            Event::MainEventsCleared => {
-                let (image_index, suboptimal, acquire_future) =
-                    match swapchain::acquire_next_image(swapchain.clone(), None) {
-                        Ok(r) => r,
-                        Err(e) => panic!("Failed to acquire next image: {:?}", e),
-                    };
-
-                let execution = sync::now(ctx.device.clone())
-                    .join(acquire_future)
-                    .then_execute(ctx.queue.clone(), command_buffers[image_index as usize].clone())
-                    .unwrap()
-                    .then_swapchain_present(
-                        ctx.queue.clone(),
-                        SwapchainPresentInfo::swapchain_image_index(
-                            swapchain.clone(),
-                            image_index,
-                        ),
-                    )
-                    .then_signal_fence_and_flush();
-
-                match execution {
-                    Ok(future) => {
-                        future.wait(None).unwrap();
-                    }
-                    Err(e) => {
-                        println!("Failed to flush future: {:?}", e);
-                    }
-                }
-
-                ctx.window().request_redraw();
-            }
-            _ => {}
+    event_loop.run(move |event, _, control_flow| match event {
+        Event::WindowEvent {
+            event: WindowEvent::CloseRequested,
+            ..
+        } => {
+            *control_flow = ControlFlow::Exit;
         }
+        Event::DeviceEvent { event, .. } => match event {
+            DeviceEvent::MouseMotion { delta } => {
+                if dragging {
+                    camera.arcball_rotate(Vec2::new(delta.0 as f32, delta.1 as f32), screen_size_f);
+
+                    let mut writer = compute.camera_buffer.write().unwrap();
+                    *writer = camera.inverse();
+                }
+            }
+            DeviceEvent::Button { button: 1, state } => match state {
+                ElementState::Pressed => {
+                    dragging = true;
+                    ctx.window().set_cursor_icon(CursorIcon::Move);
+                }
+                ElementState::Released => {
+                    dragging = false;
+                    ctx.window().set_cursor_icon(CursorIcon::Default);
+                }
+            },
+            _ => {}
+        },
+        Event::MainEventsCleared => {
+            let (image_index, suboptimal, acquire_future) =
+                match swapchain::acquire_next_image(swapchain.clone(), None) {
+                    Ok(r) => r,
+                    Err(e) => panic!("Failed to acquire next image: {:?}", e),
+                };
+
+            let execution = sync::now(ctx.device.clone())
+                .join(acquire_future)
+                .then_execute(
+                    ctx.queue.clone(),
+                    command_buffers[image_index as usize].clone(),
+                )
+                .unwrap()
+                .then_swapchain_present(
+                    ctx.queue.clone(),
+                    SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index),
+                )
+                .then_signal_fence_and_flush();
+
+            match execution {
+                Ok(future) => {
+                    future.wait(None).unwrap();
+                }
+                Err(e) => {
+                    println!("Failed to flush future: {:?}", e);
+                }
+            }
+        }
+        _ => {}
     });
 }
 
@@ -185,7 +187,8 @@ fn record_command_buffers(
                 command_buffer_allocator,
                 queue.queue_family_index(),
                 CommandBufferUsage::MultipleSubmit,
-            ).unwrap();
+            )
+            .unwrap();
 
             builder
                 .bind_pipeline_compute(pipeline.clone())
@@ -198,22 +201,27 @@ fn record_command_buffers(
                 .dispatch([
                     swapchain_image.dimensions().width() / 10,
                     swapchain_image.dimensions().height() / 10,
-                    1
-                ]).unwrap()
-                .blit_image(BlitImageInfo::images(compute_image.clone(), swapchain_image.clone())).unwrap();
+                    1,
+                ])
+                .unwrap()
+                .blit_image(BlitImageInfo::images(
+                    compute_image.clone(),
+                    swapchain_image.clone(),
+                ))
+                .unwrap();
 
             Arc::new(builder.build().unwrap())
         })
         .collect()
 }
 
-
 fn create_swapchain(
     device: &Arc<Device>,
     surface: &Arc<Surface>,
-    screen_size: (u32, u32)
+    screen_size: (u32, u32),
 ) -> (Arc<Swapchain>, Vec<Arc<SwapchainImage>>) {
-    let caps = device.physical_device()
+    let caps = device
+        .physical_device()
         .surface_capabilities(surface, Default::default())
         .expect("Failed to get surface capabilities");
 
@@ -245,5 +253,6 @@ fn create_swapchain(
             composite_alpha,
             ..Default::default()
         },
-    ).unwrap()
+    )
+    .unwrap()
 }

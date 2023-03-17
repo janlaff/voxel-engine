@@ -1,15 +1,17 @@
+use crate::allocators::Allocators;
 use std::sync::Arc;
+use voxel_engine_gpu::{InverseCamera, OctreeNode};
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::descriptor_set::allocator::StandardDescriptorSetAlloc;
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::device::{Device, Queue};
 use vulkano::format::Format;
-use vulkano::image::{ImageAccess, ImageAspects, ImageDimensions, ImageSubresourceRange, ImageUsage, StorageImage};
 use vulkano::image::view::{ImageView, ImageViewCreateInfo};
+use vulkano::image::{
+    ImageAccess, ImageAspects, ImageDimensions, ImageSubresourceRange, ImageUsage, StorageImage,
+};
 use vulkano::pipeline::{ComputePipeline, Pipeline};
 use vulkano::shader::ShaderModule;
-use voxel_engine_gpu::{InverseCamera, OctreeNode};
-use crate::allocators::Allocators;
 
 const RFOX_SHADER_BYTES: &[u8] = include_bytes!(env!("voxel_engine_gpu.spv"));
 
@@ -31,7 +33,7 @@ impl Compute {
         queue: &Arc<Queue>,
         screen_size: (u32, u32),
         octree: Vec<OctreeNode>,
-        allocators: &Allocators
+        allocators: &Allocators,
     ) -> Self {
         let shader = create_shader(device);
         let pipeline = create_pipeline(device, shader);
@@ -44,7 +46,7 @@ impl Compute {
             &render_image_view,
             &camera_buffer,
             &octree_buffer,
-            allocators
+            allocators,
         );
 
         Self {
@@ -53,7 +55,7 @@ impl Compute {
             octree_buffer,
             render_image,
             render_image_view,
-            render_image_set
+            render_image_set,
         }
     }
 }
@@ -69,7 +71,8 @@ fn create_pipeline(device: &Arc<Device>, shader: Arc<ShaderModule>) -> Arc<Compu
         &(),
         None,
         |_| {},
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 fn create_camera_buffer(allocators: &Allocators) -> Arc<CameraBuffer> {
@@ -81,13 +84,11 @@ fn create_camera_buffer(allocators: &Allocators) -> Arc<CameraBuffer> {
         },
         false,
         InverseCamera::default(),
-    ).unwrap()
+    )
+    .unwrap()
 }
 
-fn create_octree_buffer(
-    octree: Vec<OctreeNode>,
-    allocators: &Allocators
-) -> Arc<OctreeBuffer> {
+fn create_octree_buffer(octree: Vec<OctreeNode>, allocators: &Allocators) -> Arc<OctreeBuffer> {
     CpuAccessibleBuffer::from_iter(
         &allocators.memory,
         BufferUsage {
@@ -95,14 +96,15 @@ fn create_octree_buffer(
             ..Default::default()
         },
         false,
-        octree.into_iter()
-    ).unwrap()
+        octree.into_iter(),
+    )
+    .unwrap()
 }
 
 fn create_render_image(
     queue: &Arc<Queue>,
     screen_size: (u32, u32),
-    allocators: &Allocators
+    allocators: &Allocators,
 ) -> Arc<StorageImage> {
     StorageImage::new(
         &allocators.memory,
@@ -113,7 +115,8 @@ fn create_render_image(
         },
         Format::R32G32B32A32_SFLOAT,
         Some(queue.queue_family_index()),
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 fn create_render_image_view(render_image: &Arc<StorageImage>) -> Arc<ImageView<StorageImage>> {
@@ -136,7 +139,8 @@ fn create_render_image_view(render_image: &Arc<StorageImage>) -> Arc<ImageView<S
             },
             ..Default::default()
         },
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 fn create_render_image_set(
@@ -165,6 +169,7 @@ fn create_render_image_set(
         pipeline_layout.clone(),
         descriptor_writes
             .into_iter()
-            .filter(|w| available_bindings.contains(&w.binding()))
-    ).unwrap()
+            .filter(|w| available_bindings.contains(&w.binding())),
+    )
+    .unwrap()
 }

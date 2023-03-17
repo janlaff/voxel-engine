@@ -1,6 +1,6 @@
-use bytemuck::{Zeroable, Pod};
-use glam::{Mat4, Vec2, Vec4, Vec4Swizzles};
 use crate::ray::Ray;
+use bytemuck::{Pod, Zeroable};
+use glam::{Mat4, Vec2, Vec4, Vec4Swizzles};
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable, Pod)]
@@ -23,14 +23,17 @@ impl InverseCamera {
         Self {
             inverse_view,
             inverse_centered_view,
-            inverse_projection
+            inverse_projection,
         }
     }
 
     pub fn create_ray(&self, screen_coords: Vec2) -> Ray {
         Ray {
             origin: (self.inverse_view * Vec4::new(0.0, 0.0, 0.0, 1.0)).xyz(),
-            direction: (self.inverse_centered_view * self.inverse_projection * Vec4::from((screen_coords, 0.0, 1.0))).xyz(),
+            direction: (self.inverse_centered_view
+                * self.inverse_projection
+                * Vec4::from((screen_coords, 0.0, 1.0)))
+            .xyz(),
         }
     }
 }

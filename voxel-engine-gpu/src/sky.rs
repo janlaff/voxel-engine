@@ -1,5 +1,5 @@
-use glam::Vec3;
 use crate::ray::Ray;
+use glam::Vec3;
 
 pub fn sky_color(ray: &Ray) -> Vec3 {
     let t = 0.5 * (ray.direction.y + 1.0);

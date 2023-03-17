@@ -13,11 +13,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(position: Vec3, target: Vec3, screen_size: (f32, f32)) -> Self {
         let up = Vec3::new(0.0, -1.0, 0.0);
-        let view = Mat4::look_at_rh(
-            position,
-            target,
-            up
-        );
+        let view = Mat4::look_at_rh(position, target, up);
         let projection = Mat4::perspective_rh(
             45.0_f32.to_radians(),
             screen_size.0 / screen_size.1,
@@ -35,11 +31,7 @@ impl Camera {
     }
 
     fn update_view(&mut self) {
-        self.view = Mat4::look_at_rh(
-            self.position,
-            self.target,
-            self.up
-        );
+        self.view = Mat4::look_at_rh(self.position, self.target, self.up);
     }
 
     pub fn inverse(&self) -> InverseCamera {

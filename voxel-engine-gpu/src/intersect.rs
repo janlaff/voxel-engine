@@ -1,5 +1,5 @@
-use glam::{Vec2, Vec3};
 use crate::ray::Ray;
+use glam::{Vec2, Vec3};
 use spirv_std::num_traits::Float;
 
 pub fn intersect_sphere(ray: &Ray, center: Vec3, radius: f32) -> (bool, f32) {

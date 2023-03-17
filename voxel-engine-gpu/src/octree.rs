@@ -1,4 +1,4 @@
-use bytemuck::{Zeroable, Pod};
+use bytemuck::{Pod, Zeroable};
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable, Pod)]
@@ -23,13 +23,13 @@ impl OctreeNode {
 }
 
 pub struct OctreeNodeBuilder {
-    node: OctreeNode
+    node: OctreeNode,
 }
 
 impl OctreeNodeBuilder {
     pub fn new() -> Self {
         Self {
-            node: OctreeNode(0)
+            node: OctreeNode(0),
         }
     }
 
