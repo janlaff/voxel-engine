@@ -1,3 +1,4 @@
+use crate::device_selection::find_device;
 use std::sync::Arc;
 use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
 use vulkano::device::{
@@ -41,34 +42,7 @@ impl Context {
             .build_vk_surface(&event_loop, instance.clone())
             .unwrap();
 
-        let device_extensions = DeviceExtensions {
-            khr_swapchain: true,
-            ..DeviceExtensions::empty()
-        };
-
-        let device_features = Features {
-            vulkan_memory_model: true,
-            shader_int8: true,
-            shader_int16: true,
-            ..Default::default()
-        };
-
-        let (physical, queue_family_index) =
-            select_physical_device(&instance, &surface, &device_extensions, &device_features);
-        let (device, mut queues) = Device::new(
-            physical,
-            DeviceCreateInfo {
-                queue_create_infos: vec![QueueCreateInfo {
-                    queue_family_index,
-                    ..Default::default()
-                }],
-                enabled_extensions: device_extensions,
-                enabled_features: device_features,
-                ..Default::default()
-            },
-        )
-        .expect("Failed to create logical device");
-        let queue = queues.next().unwrap();
+        let (physical, device, queue) = find_device(&instance, &surface);
 
         Self {
             instance,
@@ -85,38 +59,4 @@ impl Context {
             .downcast_ref::<Window>()
             .unwrap()
     }
-}
-
-fn select_physical_device(
-    instance: &Arc<Instance>,
-    surface: &Arc<Surface>,
-    device_extensions: &DeviceExtensions,
-    device_features: &Features,
-) -> (Arc<PhysicalDevice>, u32) {
-    instance
-        .enumerate_physical_devices()
-        .expect("Failed to enumerate physical devices")
-        .filter(|p| {
-            p.supported_extensions().contains(device_extensions)
-                && p.supported_features().contains(device_features)
-        })
-        .filter_map(|p| {
-            p.queue_family_properties()
-                .iter()
-                .enumerate()
-                .position(|(i, q)| {
-                    q.queue_flags.graphics
-                        && q.queue_flags.compute
-                        && p.surface_support(i as u32, &surface).unwrap_or(false)
-                })
-                .map(|q| (p, q as u32))
-        })
-        .min_by_key(|(p, _)| match p.properties().device_type {
-            PhysicalDeviceType::DiscreteGpu => 0,
-            PhysicalDeviceType::IntegratedGpu => 1,
-            PhysicalDeviceType::VirtualGpu => 2,
-            PhysicalDeviceType::Cpu => 3,
-            _ => 4,
-        })
-        .expect("No suitable physical devices available")
 }

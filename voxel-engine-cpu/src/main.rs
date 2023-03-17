@@ -3,6 +3,7 @@ mod camera;
 mod command;
 mod compute;
 mod context;
+mod device_selection;
 mod swapchain;
 
 use allocators::*;
@@ -10,6 +11,7 @@ use camera::*;
 use command::*;
 use compute::*;
 use context::*;
+use device_selection::*;
 use swapchain::*;
 
 use voxel_engine_gpu::glam::{Vec2, Vec3};
@@ -22,9 +24,13 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{CursorIcon, WindowBuilder};
 
 fn main() {
+    run_app();
+}
+
+fn run_app() {
     let event_loop = EventLoop::new();
     let window_builder = WindowBuilder::new()
-        .with_title("rfox")
+        .with_title("voxel-engine")
         .with_resizable(false);
 
     let ctx = Context::new(&event_loop, window_builder);
