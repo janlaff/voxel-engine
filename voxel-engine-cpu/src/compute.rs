@@ -14,7 +14,7 @@ use vulkano::pipeline::{ComputePipeline, Pipeline};
 use vulkano::shader::ShaderModule;
 use winit::dpi::PhysicalSize;
 
-const RFOX_SHADER_BYTES: &[u8] = include_bytes!(env!("voxel_engine_gpu.spv"));
+const SHADER_BYTES: &[u8] = include_bytes!(env!("voxel_engine_gpu.spv"));
 
 type OctreeBuffer = CpuAccessibleBuffer<[OctreeNode]>;
 type CameraBuffer = CpuAccessibleBuffer<InverseCamera>;
@@ -62,7 +62,7 @@ impl Compute {
 }
 
 fn create_shader(device: &Arc<Device>) -> Arc<ShaderModule> {
-    unsafe { ShaderModule::from_bytes(device.clone(), RFOX_SHADER_BYTES) }.unwrap()
+    unsafe { ShaderModule::from_bytes(device.clone(), SHADER_BYTES) }.unwrap()
 }
 
 fn create_pipeline(device: &Arc<Device>, shader: Arc<ShaderModule>) -> Arc<ComputePipeline> {

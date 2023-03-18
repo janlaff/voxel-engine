@@ -1,3 +1,5 @@
+#![feature(int_roundings)]
+
 mod allocators;
 mod camera;
 mod command;
@@ -13,7 +15,7 @@ use compute::*;
 use context::*;
 use swapchain::*;
 
-use voxel_engine_gpu::glam::{Vec2, Vec3};
+use voxel_engine_gpu::glam::{Vec3};
 use voxel_engine_gpu::OctreeNodeBuilder;
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
@@ -21,7 +23,7 @@ use vulkano::swapchain::{
 use vulkano::sync;
 use vulkano::sync::{FlushError, GpuFuture};
 use winit::dpi::PhysicalPosition;
-use winit::event::{DeviceEvent, ElementState, Event, MouseButton, WindowEvent};
+use winit::event::{ElementState, Event, MouseButton, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{CursorIcon, WindowBuilder};
 
@@ -182,17 +184,17 @@ fn run_app() {
                         let mut writer = compute.camera_buffer.write().unwrap();
                         *writer = camera.inverse();
                     }
-
-                    command_buffers = record_command_buffers(
-                        &ctx.gpu.device,
-                        &ctx.gpu.queue,
-                        &compute.pipeline,
-                        &images,
-                        &allocators.command_buffer,
-                        &compute.render_image_set,
-                        &compute.render_image,
-                    );
                 }
+
+                command_buffers = record_command_buffers(
+                    &ctx.gpu.device,
+                    &ctx.gpu.queue,
+                    &compute.pipeline,
+                    &images,
+                    &allocators.command_buffer,
+                    &compute.render_image_set,
+                    &compute.render_image,
+                );
             }
 
             let (image_index, suboptimal, acquire_future) =
