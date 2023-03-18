@@ -12,6 +12,7 @@ use vulkano::image::{
 };
 use vulkano::pipeline::{ComputePipeline, Pipeline};
 use vulkano::shader::ShaderModule;
+use winit::dpi::PhysicalSize;
 
 const RFOX_SHADER_BYTES: &[u8] = include_bytes!(env!("voxel_engine_gpu.spv"));
 
@@ -31,7 +32,7 @@ impl Compute {
     pub fn new(
         device: &Arc<Device>,
         queue: &Arc<Queue>,
-        screen_size: (u32, u32),
+        screen_size: PhysicalSize<u32>,
         octree: Vec<OctreeNode>,
         allocators: &Allocators,
     ) -> Self {
@@ -103,14 +104,14 @@ fn create_octree_buffer(octree: Vec<OctreeNode>, allocators: &Allocators) -> Arc
 
 fn create_render_image(
     queue: &Arc<Queue>,
-    screen_size: (u32, u32),
+    screen_size: PhysicalSize<u32>,
     allocators: &Allocators,
 ) -> Arc<StorageImage> {
     StorageImage::new(
         &allocators.memory,
         ImageDimensions::Dim2d {
-            width: screen_size.0,
-            height: screen_size.1,
+            width: screen_size.width,
+            height: screen_size.height,
             array_layers: 1,
         },
         Format::R32G32B32A32_SFLOAT,

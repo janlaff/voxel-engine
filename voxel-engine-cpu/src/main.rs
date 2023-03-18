@@ -11,15 +11,17 @@ use camera::*;
 use command::*;
 use compute::*;
 use context::*;
-use gpu_model::*;
 use swapchain::*;
 
 use voxel_engine_gpu::glam::{Vec2, Vec3};
 use voxel_engine_gpu::OctreeNodeBuilder;
-use vulkano::swapchain::SwapchainPresentInfo;
+use vulkano::swapchain::{
+    AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
+};
 use vulkano::sync;
-use vulkano::sync::GpuFuture;
-use winit::event::{DeviceEvent, ElementState, Event, WindowEvent};
+use vulkano::sync::{FlushError, GpuFuture};
+use winit::dpi::PhysicalPosition;
+use winit::event::{DeviceEvent, ElementState, Event, MouseButton, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{CursorIcon, WindowBuilder};
 
@@ -29,23 +31,19 @@ fn main() {
 
 fn run_app() {
     let event_loop = EventLoop::new();
-    let window_builder = WindowBuilder::new()
-        .with_title("voxel-engine")
-        .with_resizable(false);
+    let window_builder = WindowBuilder::new().with_title("voxel-engine");
 
     let ctx = Context::new(&event_loop, window_builder);
     let allocators = Allocators::new(&ctx.gpu.device);
 
-    let screen_size_u = (
-        ctx.window().inner_size().width,
-        ctx.window().inner_size().height,
+    let mut camera = Camera::new(
+        Vec3::splat(3.0),
+        Vec3::splat(0.0),
+        ctx.window().inner_size().to_logical(1.0),
     );
 
-    let screen_size_f = (screen_size_u.0 as f32, screen_size_u.1 as f32);
-
-    let mut camera = Camera::new(Vec3::splat(3.0), Vec3::splat(0.0), screen_size_f);
-
-    let (swapchain, images) = create_swapchain(&ctx.gpu.device, &ctx.surface, screen_size_u);
+    let (mut swapchain, mut images) =
+        create_swapchain(&ctx.gpu.device, &ctx.surface, ctx.window().inner_size());
 
     let octree = vec![
         OctreeNodeBuilder::new()
@@ -86,11 +84,11 @@ fn run_app() {
             .build(),
     ];
 
-    let compute = Compute::new(
+    let mut compute = Compute::new(
         &ctx.gpu.device,
         &ctx.gpu.queue,
-        screen_size_u,
-        octree,
+        ctx.window().inner_size(),
+        octree.clone(),
         &allocators,
     );
 
@@ -99,7 +97,7 @@ fn run_app() {
         *writer = camera.inverse();
     }
 
-    let command_buffers = record_command_buffers(
+    let mut command_buffers = record_command_buffers(
         &ctx.gpu.device,
         &ctx.gpu.queue,
         &compute.pipeline,
@@ -110,6 +108,11 @@ fn run_app() {
     );
 
     let mut dragging = false;
+    let mut window_resized = false;
+    let mut recreate_swapchain = false;
+
+    let mut last_position = PhysicalPosition::default();
+
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
             event: WindowEvent::CloseRequested,
@@ -117,33 +120,102 @@ fn run_app() {
         } => {
             *control_flow = ControlFlow::Exit;
         }
-        Event::DeviceEvent { event, .. } => match event {
-            DeviceEvent::MouseMotion { delta } => {
-                if dragging {
-                    camera.arcball_rotate(Vec2::new(delta.0 as f32, delta.1 as f32), screen_size_f);
+        Event::WindowEvent {
+            event: WindowEvent::Resized(_),
+            ..
+        } => {
+            window_resized = true;
+        }
+        Event::WindowEvent {
+            event: WindowEvent::CursorMoved { position, .. },
+            ..
+        } => {
+            if dragging {
+                let delta = PhysicalPosition::from((
+                    position.x - last_position.x,
+                    position.y - last_position.y,
+                ));
 
-                    let mut writer = compute.camera_buffer.write().unwrap();
-                    *writer = camera.inverse();
+                camera.arcball_rotate(
+                    delta,
+                    ctx.window().inner_size().to_logical(1.0),
+                );
+
+                let mut writer = compute.camera_buffer.write().unwrap();
+                *writer = camera.inverse();
+            }
+
+            last_position = position;
+        }
+        Event::WindowEvent {
+            event: WindowEvent::MouseInput { state, button: MouseButton::Left, .. },
+            ..
+        } => match state {
+            ElementState::Pressed => {
+                dragging = true;
+                ctx.window().set_cursor_icon(CursorIcon::Move);
+            }
+            ElementState::Released => {
+                dragging = false;
+                ctx.window().set_cursor_icon(CursorIcon::Default);
+            }
+        }
+        Event::MainEventsCleared => {
+            if window_resized || recreate_swapchain {
+                recreate_swapchain = false;
+
+                (swapchain, images) = match swapchain.recreate(SwapchainCreateInfo {
+                    image_extent: ctx.window().inner_size().into(),
+                    ..swapchain.create_info()
+                }) {
+                    Ok(r) => r,
+                    Err(SwapchainCreationError::ImageExtentNotSupported { .. }) => return,
+                    Err(e) => panic!("Failed to recreate swapchain: {}", e),
+                };
+
+                if window_resized {
+                    window_resized = false;
+
+                    compute = Compute::new(
+                        &ctx.gpu.device,
+                        &ctx.gpu.queue,
+                        ctx.window().inner_size(),
+                        octree.clone(),
+                        &allocators,
+                    );
+
+                    camera.update_projection(ctx.window().inner_size().to_logical(1.0));
+
+                    {
+                        let mut writer = compute.camera_buffer.write().unwrap();
+                        *writer = camera.inverse();
+                    }
+
+                    command_buffers = record_command_buffers(
+                        &ctx.gpu.device,
+                        &ctx.gpu.queue,
+                        &compute.pipeline,
+                        &images,
+                        &allocators.command_buffer,
+                        &compute.render_image_set,
+                        &compute.render_image,
+                    );
                 }
             }
-            DeviceEvent::Button { button: 1, state } => match state {
-                ElementState::Pressed => {
-                    dragging = true;
-                    ctx.window().set_cursor_icon(CursorIcon::Move);
-                }
-                ElementState::Released => {
-                    dragging = false;
-                    ctx.window().set_cursor_icon(CursorIcon::Default);
-                }
-            },
-            _ => {}
-        },
-        Event::MainEventsCleared => {
+
             let (image_index, suboptimal, acquire_future) =
                 match vulkano::swapchain::acquire_next_image(swapchain.clone(), None) {
                     Ok(r) => r,
+                    Err(AcquireError::OutOfDate) => {
+                        recreate_swapchain = true;
+                        return;
+                    }
                     Err(e) => panic!("Failed to acquire next image: {:?}", e),
                 };
+
+            if suboptimal {
+                recreate_swapchain = true;
+            }
 
             let execution = sync::now(ctx.gpu.device.clone())
                 .join(acquire_future)
@@ -161,6 +233,9 @@ fn run_app() {
             match execution {
                 Ok(future) => {
                     future.wait(None).unwrap();
+                }
+                Err(FlushError::OutOfDate) => {
+                    recreate_swapchain = true;
                 }
                 Err(e) => {
                     println!("Failed to flush future: {:?}", e);

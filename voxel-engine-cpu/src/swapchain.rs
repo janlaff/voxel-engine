@@ -3,11 +3,12 @@ use vulkano::device::Device;
 use vulkano::format::Format;
 use vulkano::image::{ImageUsage, SwapchainImage};
 use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo};
+use winit::dpi::{PhysicalSize};
 
 pub fn create_swapchain(
     device: &Arc<Device>,
     surface: &Arc<Surface>,
-    screen_size: (u32, u32),
+    screen_size: PhysicalSize<u32>,
 ) -> (Arc<Swapchain>, Vec<Arc<SwapchainImage>>) {
     let caps = device
         .physical_device()
@@ -31,7 +32,7 @@ pub fn create_swapchain(
             min_image_count: caps.min_image_count + 1,
             image_format: Some(format.0),
             image_color_space: format.1,
-            image_extent: [screen_size.0, screen_size.1],
+            image_extent: screen_size.into(),
             image_usage: ImageUsage {
                 transfer_dst: true,
                 ..Default::default()
