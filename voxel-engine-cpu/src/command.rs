@@ -37,8 +37,8 @@ pub fn record_command_buffers(
                     compute_image_set.clone(),
                 )
                 .dispatch([
-                    swapchain_image.dimensions().width().div_ceil(10),
-                    swapchain_image.dimensions().height().div_ceil(10),
+                    swapchain_image.dimensions().width().div_ceil(16),
+                    swapchain_image.dimensions().height().div_ceil(16),
                     1,
                 ])
                 .unwrap()

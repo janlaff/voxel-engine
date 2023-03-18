@@ -13,12 +13,12 @@ impl OctreeNode {
         (self.0 & 0x00010000) != 0
     }
 
-    pub fn valid(&self) -> u8 {
-        ((self.0 & 0x0000ff00) >> 8) as u8
+    pub fn valid(&self, index: usize) -> bool {
+        (self.0 & (1 << (index + 8))) != 0
     }
 
-    pub fn leaf(&self) -> u8 {
-        (self.0 & 0x000000ff) as u8
+    pub fn leaf(&self, index: usize) -> bool {
+        (self.0 & (1 << index)) != 0
     }
 }
 

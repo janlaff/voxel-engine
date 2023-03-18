@@ -53,41 +53,41 @@ fn run_app() {
 
     let octree = vec![
         OctreeNodeBuilder::new()
-            .valid(0b10101010)
-            .leaf(0b00100000)
-            .build(),
-        OctreeNodeBuilder::new()
             .valid(0b11111111)
             .leaf(0b11111111)
             .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b00000000)
-            .leaf(0b00000000)
-            .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b11111111)
+        //    .leaf(0b11111111)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
+        //OctreeNodeBuilder::new()
+        //    .valid(0b00000000)
+        //    .leaf(0b00000000)
+        //    .build(),
     ];
 
     let mut compute = Compute::new(
