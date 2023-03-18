@@ -6,6 +6,7 @@ mod command;
 mod compute;
 mod context;
 mod gpu_model;
+mod mouse;
 mod swapchain;
 
 use allocators::*;
@@ -13,9 +14,12 @@ use camera::*;
 use command::*;
 use compute::*;
 use context::*;
+use mouse::*;
+use std::cell::RefCell;
+use std::sync::Arc;
 use swapchain::*;
 
-use voxel_engine_gpu::glam::{Vec3};
+use voxel_engine_gpu::glam::Vec3;
 use voxel_engine_gpu::OctreeNodeBuilder;
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
@@ -38,11 +42,11 @@ fn run_app() {
     let ctx = Context::new(&event_loop, window_builder);
     let allocators = Allocators::new(&ctx.gpu.device);
 
-    let mut camera = Camera::new(
+    let camera = RefCell::new(Camera::new(
         Vec3::splat(3.0),
         Vec3::splat(0.0),
         ctx.window().inner_size().to_logical(1.0),
-    );
+    ));
 
     let (mut swapchain, mut images) =
         create_swapchain(&ctx.gpu.device, &ctx.surface, ctx.window().inner_size());
@@ -96,7 +100,7 @@ fn run_app() {
 
     {
         let mut writer = compute.camera_buffer.write().unwrap();
-        *writer = camera.inverse();
+        *writer = camera.borrow().inverse();
     }
 
     let mut command_buffers = record_command_buffers(
@@ -109,51 +113,32 @@ fn run_app() {
         &compute.render_image,
     );
 
-    let mut dragging = false;
     let mut window_resized = false;
     let mut recreate_swapchain = false;
 
-    let mut last_position = PhysicalPosition::default();
+    let mut mouse_handler = MouseHandler::new();
 
     event_loop.run(move |event, _, control_flow| match event {
-        Event::WindowEvent { event, .. } => match event {
-            WindowEvent::CloseRequested => {
-                *control_flow = ControlFlow::Exit;
-            }
-            WindowEvent::Resized(_) => {
-                window_resized = true;
-            }
-            WindowEvent::CursorMoved { position, .. } => {
-                if dragging {
-                    let delta = PhysicalPosition::from((
-                        position.x - last_position.x,
-                        position.y - last_position.y,
-                    ));
+        Event::WindowEvent { event, .. } => {
+            mouse_handler.process_event(&event, |drag_delta| {
+                camera
+                    .borrow_mut()
+                    .arcball_rotate(drag_delta, ctx.window().inner_size().to_logical(1.0));
 
-                    camera.arcball_rotate(delta, ctx.window().inner_size().to_logical(1.0));
+                let mut writer = compute.camera_buffer.write().unwrap();
+                *writer = camera.borrow().inverse();
+            });
 
-                    let mut writer = compute.camera_buffer.write().unwrap();
-                    *writer = camera.inverse();
+            match event {
+                WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
                 }
-
-                last_position = position;
+                WindowEvent::Resized(_) => {
+                    window_resized = true;
+                }
+                _ => {}
             }
-            WindowEvent::MouseInput {
-                state,
-                button: MouseButton::Left,
-                ..
-            } => match state {
-                ElementState::Pressed => {
-                    dragging = true;
-                    ctx.window().set_cursor_icon(CursorIcon::Move);
-                }
-                ElementState::Released => {
-                    dragging = false;
-                    ctx.window().set_cursor_icon(CursorIcon::Default);
-                }
-            },
-            _ => {}
-        },
+        }
         Event::MainEventsCleared => {
             if window_resized || recreate_swapchain {
                 recreate_swapchain = false;
@@ -178,11 +163,13 @@ fn run_app() {
                         &allocators,
                     );
 
-                    camera.update_projection(ctx.window().inner_size().to_logical(1.0));
+                    camera
+                        .borrow_mut()
+                        .update_projection(ctx.window().inner_size().to_logical(1.0));
 
                     {
                         let mut writer = compute.camera_buffer.write().unwrap();
-                        *writer = camera.inverse();
+                        *writer = camera.borrow().inverse();
                     }
                 }
 
