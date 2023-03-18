@@ -1,6 +1,6 @@
 use crate::allocators::Allocators;
 use std::sync::Arc;
-use voxel_engine_gpu::{InverseCamera, OctreeNode};
+use voxel_engine_gpu::{CameraMatrices, OctreeNode};
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::descriptor_set::allocator::StandardDescriptorSetAlloc;
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
@@ -17,7 +17,7 @@ use winit::dpi::PhysicalSize;
 const SHADER_BYTES: &[u8] = include_bytes!(env!("voxel_engine_gpu.spv"));
 
 type OctreeBuffer = CpuAccessibleBuffer<[OctreeNode]>;
-type CameraBuffer = CpuAccessibleBuffer<InverseCamera>;
+type CameraBuffer = CpuAccessibleBuffer<CameraMatrices>;
 
 pub struct Compute {
     pub pipeline: Arc<ComputePipeline>,
@@ -84,7 +84,7 @@ fn create_camera_buffer(allocators: &Allocators) -> Arc<CameraBuffer> {
             ..Default::default()
         },
         false,
-        InverseCamera::default(),
+        CameraMatrices::default(),
     )
     .unwrap()
 }

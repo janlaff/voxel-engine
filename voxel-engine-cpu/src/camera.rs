@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 use voxel_engine_gpu::glam::{Mat4, Vec2, Vec3, Vec4, Vec4Swizzles};
-use voxel_engine_gpu::InverseCamera;
+use voxel_engine_gpu::CameraMatrices;
 use winit::dpi::{LogicalSize, PhysicalPosition};
 
 pub struct Camera {
@@ -44,8 +44,8 @@ impl Camera {
         );
     }
 
-    pub fn inverse(&self) -> InverseCamera {
-        InverseCamera::new(&self.view, &self.projection)
+    pub fn matrices(&self) -> CameraMatrices {
+        CameraMatrices::new(&self.view, &self.projection)
     }
 
     pub fn arcball_rotate(&mut self, delta: PhysicalPosition<f32>, screen_size: LogicalSize<f32>) {

@@ -3,7 +3,7 @@ use winit::event::{ElementState, MouseButton, WindowEvent};
 
 pub struct MouseHandler {
     is_dragging: bool,
-    last_position: PhysicalPosition<f64>
+    last_position: PhysicalPosition<f64>,
 }
 
 impl MouseHandler {
@@ -14,7 +14,11 @@ impl MouseHandler {
         }
     }
 
-    pub fn process_event(&mut self, event: &WindowEvent, drag_handler: impl Fn(PhysicalPosition<f32>)) {
+    pub fn process_event(
+        &mut self,
+        event: &WindowEvent,
+        drag_handler: impl Fn(PhysicalPosition<f32>),
+    ) {
         match event {
             WindowEvent::MouseInput {
                 ref state,

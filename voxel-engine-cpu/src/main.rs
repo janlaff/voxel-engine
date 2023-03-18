@@ -100,7 +100,7 @@ fn run_app() {
 
     {
         let mut writer = compute.camera_buffer.write().unwrap();
-        *writer = camera.borrow().inverse();
+        *writer = camera.borrow().matrices();
     }
 
     let mut command_buffers = record_command_buffers(
@@ -126,7 +126,7 @@ fn run_app() {
                     .arcball_rotate(drag_delta, ctx.window().inner_size().to_logical(1.0));
 
                 let mut writer = compute.camera_buffer.write().unwrap();
-                *writer = camera.borrow().inverse();
+                *writer = camera.borrow().matrices();
             });
 
             match event {
@@ -169,7 +169,7 @@ fn run_app() {
 
                     {
                         let mut writer = compute.camera_buffer.write().unwrap();
-                        *writer = camera.borrow().inverse();
+                        *writer = camera.borrow().matrices();
                     }
                 }
 

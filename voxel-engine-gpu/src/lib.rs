@@ -1,14 +1,14 @@
 #![no_std]
 
+mod camera_matrices;
 mod intersect;
-mod inverse_camera;
 mod octree;
 mod ray;
 mod sky;
 
+pub use camera_matrices::*;
 pub use glam;
 pub use intersect::*;
-pub use inverse_camera::*;
 pub use octree::*;
 pub use ray::*;
 pub use sky::*;
@@ -145,7 +145,7 @@ fn simple_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
 pub fn main_cs(
     #[spirv(global_invocation_id)] id: UVec3,
     #[spirv(descriptor_set = 0, binding = 0)] image: &Image!(2D, format = rgba32f, sampled = false),
-    #[spirv(descriptor_set = 0, binding = 1, uniform)] camera: &InverseCamera,
+    #[spirv(descriptor_set = 0, binding = 1, uniform)] camera: &CameraMatrices,
     #[spirv(descriptor_set = 0, binding = 2, storage_buffer)] octree: &[OctreeNode],
 ) {
     let output_coords = id.xy();

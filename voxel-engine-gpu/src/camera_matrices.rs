@@ -4,13 +4,13 @@ use glam::{Mat4, Vec2, Vec4, Vec4Swizzles};
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable, Pod)]
-pub struct InverseCamera {
+pub struct CameraMatrices {
     pub inverse_view: Mat4,
     pub inverse_centered_view: Mat4,
     pub inverse_projection: Mat4,
 }
 
-impl InverseCamera {
+impl CameraMatrices {
     pub fn new(view: &Mat4, projection: &Mat4) -> Self {
         let inverse_view = view.inverse();
         let inverse_projection = projection.inverse();
