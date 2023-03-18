@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
-use winit::dpi::{LogicalSize, PhysicalPosition};
 use voxel_engine_gpu::glam::{Mat4, Vec2, Vec3, Vec4, Vec4Swizzles};
 use voxel_engine_gpu::InverseCamera;
+use winit::dpi::{LogicalSize, PhysicalPosition};
 
 pub struct Camera {
     pub position: Vec3,

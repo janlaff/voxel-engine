@@ -114,52 +114,44 @@ fn run_app() {
     let mut last_position = PhysicalPosition::default();
 
     event_loop.run(move |event, _, control_flow| match event {
-        Event::WindowEvent {
-            event: WindowEvent::CloseRequested,
-            ..
-        } => {
-            *control_flow = ControlFlow::Exit;
-        }
-        Event::WindowEvent {
-            event: WindowEvent::Resized(_),
-            ..
-        } => {
-            window_resized = true;
-        }
-        Event::WindowEvent {
-            event: WindowEvent::CursorMoved { position, .. },
-            ..
-        } => {
-            if dragging {
-                let delta = PhysicalPosition::from((
-                    position.x - last_position.x,
-                    position.y - last_position.y,
-                ));
-
-                camera.arcball_rotate(
-                    delta,
-                    ctx.window().inner_size().to_logical(1.0),
-                );
-
-                let mut writer = compute.camera_buffer.write().unwrap();
-                *writer = camera.inverse();
+        Event::WindowEvent { event, .. } => match event {
+            WindowEvent::CloseRequested => {
+                *control_flow = ControlFlow::Exit;
             }
+            WindowEvent::Resized(_) => {
+                window_resized = true;
+            }
+            WindowEvent::CursorMoved { position, .. } => {
+                if dragging {
+                    let delta = PhysicalPosition::from((
+                        position.x - last_position.x,
+                        position.y - last_position.y,
+                    ));
 
-            last_position = position;
-        }
-        Event::WindowEvent {
-            event: WindowEvent::MouseInput { state, button: MouseButton::Left, .. },
-            ..
-        } => match state {
-            ElementState::Pressed => {
-                dragging = true;
-                ctx.window().set_cursor_icon(CursorIcon::Move);
+                    camera.arcball_rotate(delta, ctx.window().inner_size().to_logical(1.0));
+
+                    let mut writer = compute.camera_buffer.write().unwrap();
+                    *writer = camera.inverse();
+                }
+
+                last_position = position;
             }
-            ElementState::Released => {
-                dragging = false;
-                ctx.window().set_cursor_icon(CursorIcon::Default);
-            }
-        }
+            WindowEvent::MouseInput {
+                state,
+                button: MouseButton::Left,
+                ..
+            } => match state {
+                ElementState::Pressed => {
+                    dragging = true;
+                    ctx.window().set_cursor_icon(CursorIcon::Move);
+                }
+                ElementState::Released => {
+                    dragging = false;
+                    ctx.window().set_cursor_icon(CursorIcon::Default);
+                }
+            },
+            _ => {}
+        },
         Event::MainEventsCleared => {
             if window_resized || recreate_swapchain {
                 recreate_swapchain = false;

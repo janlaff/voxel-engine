@@ -3,7 +3,7 @@ use vulkano::device::Device;
 use vulkano::format::Format;
 use vulkano::image::{ImageUsage, SwapchainImage};
 use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo};
-use winit::dpi::{PhysicalSize};
+use winit::dpi::PhysicalSize;
 
 pub fn create_swapchain(
     device: &Arc<Device>,
