@@ -12,5 +12,5 @@ codegen-units = 16
 [profile.dev.build-override]
 opt-level = 3
 
-[profile.dev]
-opt-level = 1
+#[profile.dev]
+#opt-level = 1

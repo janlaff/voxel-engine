@@ -13,124 +13,68 @@ pub use octree::*;
 pub use ray::*;
 pub use sky::*;
 
-use glam::{IVec2, Mat4, UVec2, UVec3, Vec2, Vec2Swizzles, Vec3, vec3, Vec3Swizzles, Vec4, Vec4Swizzles};
+use glam::{
+    vec3, IVec2, Mat4, UVec2, UVec3, Vec2, Vec2Swizzles, Vec3, Vec3Swizzles, Vec4, Vec4Swizzles,
+};
 use spirv_std::num_traits::Float;
 use spirv_std::{spirv, Image};
 
-fn trace_ray(ray: &Ray) -> Vec3 {
-    let mut hit = false;
-    let mut distance = Float::infinity();
-    let mut color = Vec3::default();
+const STACK_SIZE: usize = 8;
 
-    let hit_sphere = intersect_sphere(ray, Vec3::new(1.0, 0.0, 0.0), 0.5);
-    if hit_sphere.0 && hit_sphere.1 < distance {
-        hit = true;
-        distance = hit_sphere.1;
-        color = Vec3::new(0.0, 1.0, 0.0);
+struct Stack {
+    index: [usize; STACK_SIZE],
+    center: [Vec3; STACK_SIZE],
+    scale: [f32; STACK_SIZE],
+    ptr: i32,
+}
+
+impl Stack {
+    fn new() -> Self {
+        Self {
+            index: [0; STACK_SIZE],
+            center: [Vec3::default(); STACK_SIZE],
+            scale: [0.0; STACK_SIZE],
+            ptr: -1,
+        }
     }
 
-    let hit_sphere = intersect_sphere(ray, Vec3::new(-1.0, 0.0, 0.0), 0.5);
-    if hit_sphere.0 && hit_sphere.1 < distance {
-        hit = true;
-        distance = hit_sphere.1;
-        color = Vec3::new(0.0, 1.0, 0.0);
+    fn empty(&self) -> bool {
+        self.ptr < 0
     }
 
-    let hit_sphere = intersect_sphere(ray, Vec3::new(0.0, 0.0, 1.0), 0.5);
-    if hit_sphere.0 && hit_sphere.1 < distance {
-        hit = true;
-        distance = hit_sphere.1;
-        color = Vec3::new(0.0, 1.0, 0.0);
+    fn push(&mut self, index: usize, center: Vec3, scale: f32) {
+        self.ptr += 1;
+        self.index[self.ptr as usize] = index;
+        self.center[self.ptr as usize] = center;
+        self.scale[self.ptr as usize] = scale;
     }
 
-    let hit_sphere = intersect_sphere(ray, Vec3::new(0.0, 0.0, -1.0), 0.5);
-    if hit_sphere.0 && hit_sphere.1 < distance {
-        hit = true;
-        distance = hit_sphere.1;
-        color = Vec3::new(0.0, 1.0, 0.0);
-    }
-
-    let hit_box = intersect_box(ray, Vec3::new(0.0, 0.0, 0.0), 0.5);
-    if hit_box.0 && hit_box.1 < distance {
-        hit = true;
-        distance = hit_box.1;
-        color = Vec3::new(1.0, 0.0, 0.0);
-    }
-
-    if hit {
-        color * (distance / 20.0)
-    } else {
-        sky_color(ray)
+    fn pop(&mut self) -> (usize, Vec3, f32) {
+        self.ptr -= 1;
+        (
+            self.index[(self.ptr + 1) as usize],
+            self.center[(self.ptr + 1) as usize],
+            self.scale[(self.ptr + 1) as usize],
+        )
     }
 }
 
+#[test]
+fn test_stack() {
+    let mut stack = Stack::new();
 
+    assert!(stack.empty());
+    stack.push(0, Vec3::default(), 0.0);
+    assert!(!stack.empty());
+    assert_eq!(stack.pop(), (0, Vec3::default(), 0.0));
+    assert!(stack.empty());
 
-//fn simple_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
-//    #[derive(Default, Copy, Clone)]
-//    struct Stack {
-//        index: usize,
-//        center: Vec3,
-//        scale: f32,
-//    }
-//
-//    let mut stack = [Stack::default(); 10];
-//    let mut stack_pos = 1;
-//    let mut center = Vec3::splat(0.0);
-//    let mut scale = 1.0;
-//    let mut index = 0usize;
-//
-//    if !intersect_box(ray, center, scale).0 {
-//        return sky_color(ray);
-//    } else {
-//        return stack[9].center;
-//    }
-//
-//    stack[0] = Stack {
-//        index,
-//        center,
-//        scale: scale * 0.5,
-//    };
-//
-//    while stack_pos > 0 {
-//        stack_pos -= 1;
-//
-//        center = stack[stack_pos].center;
-//        index = stack[stack_pos].index;
-//        scale = stack[stack_pos].scale;
-//
-//        //uint node = 0x000003FF;
-//        let node = &octree[index];
-//        let child_ptr = node.child_ptr();
-//        let valid_mask = node.valid();
-//        let leaf_mask = node.leaf();
-//
-//        for i in 0..8 {
-//            let valid = (valid_mask & (1 << i)) != 0;
-//            let leaf = (leaf_mask & (1 << i)) != 0;
-//
-//            if !valid {
-//                continue;
-//            }
-//
-//            let new_center = center + scale * POS[i];
-//
-//            if !intersect_box(ray, new_center, scale).0 {
-//                continue;
-//            }
-//
-//            if leaf {
-//                return Vec3::new(1.0, 0.0, 0.0); //vec3(hit.distance) / 10;
-//            } else {
-//                break;
-//                //stack[stack_pos] = Stack { index: child_ptr as usize, center: new_center, scale: scale * 0.5 };
-//                //stack_pos += 1;
-//            }
-//        }
-//    }
-//
-//    sky_color(ray)
-//}
+    stack.push(0, Vec3::default(), 0.0);
+    stack.push(1, Vec3::default(), 0.1);
+
+    assert_eq!(stack.pop(), (1, Vec3::default(), 0.1));
+    assert_eq!(stack.pop(), (0, Vec3::default(), 0.0));
+}
 
 const PPP: Vec3 = Vec3::new(1.0, 1.0, 1.0);
 const PNP: Vec3 = Vec3::new(1.0, -1.0, 1.0);
@@ -143,7 +87,7 @@ const PPN: Vec3 = Vec3::new(1.0, 1.0, -1.0);
 const POS: [Vec3; 8] = [PNN, PNP, PPN, PPP, NNN, NNP, NPN, NPP];
 const EPSILON: f32 = 0.000001;
 
-fn trace_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
+pub fn trace_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
     let center = vec3(0.0, 0.0, 0.0);
     let scale = 1.0;
 
@@ -151,27 +95,37 @@ fn trace_octree(ray: &Ray, octree: &[OctreeNode]) -> Vec3 {
         return sky_color(ray);
     }
 
-    let node = octree[0];
-    let mut closest_distance = Float::infinity();
-    let mut voxel_color = vec3(0.0, 0.0, 0.0);
+    let mut stack = Stack::new();
+    stack.push(0, center, scale);
 
-    for index in 0..8 {
-        if !node.valid(index) {
-            continue;
-        }
+    let mut closest_hit = Float::infinity();
+    let mut color = sky_color(ray);
 
-        if node.leaf(index) {
-            let new_center = center + POS[index] * 0.5;
-            let (hit, distance) = intersect_box(ray, new_center, 0.5);
+    while !stack.empty() {
+        let (index, center, scale) = stack.pop();
+        let node = octree[index];
 
-            if hit && distance < closest_distance {
-                closest_distance = distance;
-                voxel_color = (POS[index] + 1.0) / 2.0;
+        for child_index in 0..8 {
+            if !node.valid(child_index) {
+                continue;
+            }
+
+            let new_center = center + POS[child_index] * scale * 0.5;
+
+            if node.leaf(child_index) {
+                let (hit, distance) = intersect_box(ray, new_center, scale * 0.5);
+
+                if hit && distance < closest_hit {
+                    closest_hit = distance;
+                    color = (new_center + 1.0) / 2.0;
+                }
+            } else {
+                stack.push(node.child_ptr() as usize, new_center, scale * 0.5);
             }
         }
     }
 
-    voxel_color
+    color
 }
 
 #[spirv(compute(threads(16, 16)))]

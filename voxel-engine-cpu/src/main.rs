@@ -19,8 +19,8 @@ use std::cell::RefCell;
 use std::sync::Arc;
 use swapchain::*;
 
-use voxel_engine_gpu::glam::Vec3;
-use voxel_engine_gpu::OctreeNodeBuilder;
+use voxel_engine_gpu::glam::{Vec3, vec3};
+use voxel_engine_gpu::{OctreeNodeBuilder, Ray, trace_octree};
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
 };
@@ -53,41 +53,47 @@ fn run_app() {
 
     let octree = vec![
         OctreeNodeBuilder::new()
+            .child_ptr(0b00000001)
+            .valid(0b11111111)
+            .leaf(0b11111110)
+            .build(),
+        OctreeNodeBuilder::new()
+            .child_ptr(9)
+            .valid(0b11111111)
+            .leaf(0b11111110)
+            .build(),
+        OctreeNodeBuilder::new()
             .valid(0b11111111)
             .leaf(0b11111111)
             .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b11111111)
-        //    .leaf(0b11111111)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
-        //OctreeNodeBuilder::new()
-        //    .valid(0b00000000)
-        //    .leaf(0b00000000)
-        //    .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
+        OctreeNodeBuilder::new()
+            .valid(0b11111111)
+            .leaf(0b11111111)
+            .build(),
     ];
 
     let mut compute = Compute::new(

@@ -6,7 +6,7 @@ pub struct OctreeNode(pub u32);
 
 impl OctreeNode {
     pub fn child_ptr(&self) -> u16 {
-        ((self.0 & 0xfffe) >> 17) as u16
+        ((self.0 & 0xfffe0000) >> 17) as u16
     }
 
     pub fn far(&self) -> bool {

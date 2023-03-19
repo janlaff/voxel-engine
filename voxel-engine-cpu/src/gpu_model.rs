@@ -13,6 +13,8 @@ const DEVICE_EXTENSIONS: DeviceExtensions = DeviceExtensions {
 
 const DEVICE_FEATURES: Features = Features {
     vulkan_memory_model: true,
+    shader_int8: true,
+    shader_int16: true,
     ..Features::empty()
 };
 

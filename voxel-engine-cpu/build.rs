@@ -6,6 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     SpirvBuilder::new("../voxel-engine-gpu", "spirv-unknown-vulkan1.2")
         .print_metadata(MetadataPrintout::Full)
         .capability(Capability::ImageQuery)
+        .capability(Capability::Int8)
+        .capability(Capability::Int16)
         .build()?;
 
     // Generate build info
