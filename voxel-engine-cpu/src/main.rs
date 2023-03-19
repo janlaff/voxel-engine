@@ -20,7 +20,7 @@ use std::sync::Arc;
 use swapchain::*;
 
 use voxel_engine_gpu::glam::{Vec3, vec3};
-use voxel_engine_gpu::{OctreeNodeBuilder, Ray, trace_octree};
+use voxel_engine_gpu::{OctreeNodeBuilder, Ray, trace_octree_top_down};
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
 };
