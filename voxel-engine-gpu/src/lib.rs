@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(const_fn_floating_point_arithmetic)]
 
 mod camera_matrices;
 mod intersect;
@@ -6,7 +7,6 @@ mod octree;
 mod ray;
 mod sky;
 mod stack;
-mod trace;
 
 pub use camera_matrices::*;
 pub use glam;
@@ -15,7 +15,6 @@ pub use octree::*;
 pub use ray::*;
 pub use sky::*;
 pub use stack::*;
-pub use trace::*;
 
 use glam::{
     vec3, IVec2, Mat4, UVec2, UVec3, Vec2, Vec2Swizzles, Vec3, Vec3Swizzles, Vec4, Vec4Swizzles,
@@ -39,7 +38,7 @@ pub fn main_cs(
 
     let screen_coords = output_coords.as_vec2() / screen_size.as_vec2() * 2.0 - 1.0;
     let camera_ray = camera.create_ray(screen_coords);
-    let output_color = trace_octree_top_down(&camera_ray, octree);
+    let output_color = trace_octree(camera_ray, octree);
 
     unsafe {
         image.write(output_coords, Vec4::from((output_color, 1.0)));

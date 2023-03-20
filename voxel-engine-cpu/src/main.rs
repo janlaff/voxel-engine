@@ -19,8 +19,8 @@ use std::cell::RefCell;
 use std::sync::Arc;
 use swapchain::*;
 
-use voxel_engine_gpu::glam::{Vec3, vec3};
-use voxel_engine_gpu::{OctreeNodeBuilder, Ray, trace_octree_top_down};
+use voxel_engine_gpu::glam::{vec3, Vec3};
+use voxel_engine_gpu::{trace_octree_top_down, OctreeNode, Ray};
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
 };
@@ -44,7 +44,7 @@ fn run_app() {
 
     let camera = RefCell::new(Camera::new(
         Vec3::splat(3.0),
-        Vec3::splat(0.0),
+        vec3(1.0, 2.0, 0.0),
         ctx.window().inner_size().to_logical(1.0),
     ));
 
@@ -52,48 +52,44 @@ fn run_app() {
         create_swapchain(&ctx.gpu.device, &ctx.surface, ctx.window().inner_size());
 
     let octree = vec![
-        OctreeNodeBuilder::new()
-            .child_ptr(0b00000001)
-            .valid(0b11111111)
-            .leaf(0b11111110)
-            .build(),
-        OctreeNodeBuilder::new()
-            .child_ptr(9)
-            .valid(0b11111111)
-            .leaf(0b11111110)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
-        OctreeNodeBuilder::new()
-            .valid(0b11111111)
-            .leaf(0b11111111)
-            .build(),
+        // Root node
+        OctreeNode::new(1, false, 0b11111111, 0b11111111),
+        // First 8 sub cubes
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        // 2nd level subcube
+//        OctreeNode::new(17, false, 0b11111111, 0b11111110),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        // 4rd level subcube
+//        OctreeNode::new(25, false, 0b11111111, 0b11111110),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        // 5rd level subcube
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
+//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
     ];
 
     let mut compute = Compute::new(
