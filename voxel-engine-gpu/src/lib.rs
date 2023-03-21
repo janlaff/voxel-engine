@@ -38,7 +38,7 @@ pub fn main_cs(
 
     let screen_coords = output_coords.as_vec2() / screen_size.as_vec2() * 2.0 - 1.0;
     let camera_ray = camera.create_ray(screen_coords);
-    let output_color = trace_octree(camera_ray, octree);
+    let output_color = trace_octree(&camera_ray, octree);
 
     unsafe {
         image.write(output_coords, Vec4::from((output_color, 1.0)));

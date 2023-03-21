@@ -20,7 +20,7 @@ use std::sync::Arc;
 use swapchain::*;
 
 use voxel_engine_gpu::glam::{vec3, Vec3};
-use voxel_engine_gpu::{trace_octree_top_down, OctreeNode, Ray};
+use voxel_engine_gpu::{OctreeNode, Ray};
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
 };
@@ -43,8 +43,8 @@ fn run_app() {
     let allocators = Allocators::new(&ctx.gpu.device);
 
     let camera = RefCell::new(Camera::new(
-        Vec3::splat(3.0),
-        vec3(1.0, 2.0, 0.0),
+        Vec3::splat(-3.0),
+        Vec3::splat(0.0),
         ctx.window().inner_size().to_logical(1.0),
     ));
 
@@ -53,7 +53,7 @@ fn run_app() {
 
     let octree = vec![
         // Root node
-        OctreeNode::new(1, false, 0b11111111, 0b11111111),
+        OctreeNode::new(1, false, 0b11111110, 0b11111111),
         // First 8 sub cubes
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
