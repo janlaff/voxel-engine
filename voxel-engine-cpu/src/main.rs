@@ -53,8 +53,17 @@ fn run_app() {
 
     let octree = vec![
         // Root node
-        OctreeNode::new(1, false, 0b11111110, 0b11111111),
+        OctreeNode::new(1, false, 0b00111111, 0b00000000),
         // First 8 sub cubes
+        OctreeNode::new(8, false, 0b11111111, 0b11111110),
+        OctreeNode::new(7, false, 0b11111111, 0b11111110),
+        OctreeNode::new(6, false, 0b11111111, 0b11111110),
+        OctreeNode::new(5, false, 0b11111111, 0b11111110),
+        OctreeNode::new(4, false, 0b11111111, 0b11111110),
+        OctreeNode::new(3, false, 0b11111111, 0b11111110),
+        OctreeNode::new(2, false, 0b11111111, 0b11111110),
+        OctreeNode::new(1, false, 0b11111111, 0b11111110),
+        // 2nd level subcube
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
@@ -63,15 +72,6 @@ fn run_app() {
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
         OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        // 2nd level subcube
-//        OctreeNode::new(17, false, 0b11111111, 0b11111110),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
-//        OctreeNode::new(0, false, 0b11111111, 0b11111111),
 //        // 4rd level subcube
 //        OctreeNode::new(25, false, 0b11111111, 0b11111110),
 //        OctreeNode::new(0, false, 0b11111111, 0b11111111),
