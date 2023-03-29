@@ -1,7 +1,8 @@
 [workspace]
 members = [
-    "voxel-engine-cpu",
-    "voxel-engine-gpu",
+    "voxel-engine-app",
+    "voxel-engine-shader",
+    "voxel-engine-parser",
 ]
 
 # Compile build-dependencies in release mode with
