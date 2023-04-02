@@ -1,0 +1,18 @@
+[package]
+name = "voxel-engine-cpu"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "voxel-engine"
+path = "src/main.rs"
+
+[dependencies]
+winit = "0.27.5"
+vulkano = "0.32.3"
+vulkano-win = "0.32.0"
+voxel-engine-shader = { path = "../voxel-engine-shader" }
+
+[build-dependencies]
+spirv-builder = "0.6.0"
+built = "0.6.0"
