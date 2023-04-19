@@ -28,10 +28,10 @@ impl Context {
             library,
             InstanceCreateInfo {
                 enabled_extensions,
-                enabled_layers: enabled_layers
-                    .iter()
-                    .map(|layer| String::from(*layer))
-                    .collect(),
+                // enabled_layers: enabled_layers
+                //     .iter()
+                //     .map(|layer| String::from(*layer))
+                //     .collect(),
                 ..Default::default()
             },
         )

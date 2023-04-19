@@ -15,7 +15,7 @@ pub fn create_swapchain(
         .surface_capabilities(surface, Default::default())
         .expect("Failed to get surface capabilities");
 
-    let composite_alpha = caps.supported_composite_alpha.iter().next().unwrap();
+    let composite_alpha = caps.supported_composite_alpha.into_iter().next().unwrap();
 
     let format = *device
         .physical_device()
@@ -33,10 +33,7 @@ pub fn create_swapchain(
             image_format: Some(format.0),
             image_color_space: format.1,
             image_extent: screen_size.into(),
-            image_usage: ImageUsage {
-                transfer_dst: true,
-                ..Default::default()
-            },
+            image_usage: ImageUsage::TRANSFER_DST,
             present_mode: PresentMode::Mailbox,
             clipped: false,
             composite_alpha,

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
 use vulkano::device::{
-    Device, DeviceCreateInfo, DeviceExtensions, Features, Queue, QueueCreateInfo,
+    Device, DeviceCreateInfo, DeviceExtensions, Features, Queue, QueueCreateInfo, QueueFlags,
 };
 use vulkano::instance::Instance;
 use vulkano::swapchain::Surface;
@@ -71,8 +71,8 @@ fn find_queue_family(
         .iter()
         .enumerate()
         .position(|(queue_family_index, queue_family)| {
-            queue_family.queue_flags.graphics
-                && queue_family.queue_flags.compute
+            let flags = QueueFlags::GRAPHICS & QueueFlags::COMPUTE;
+            queue_family.queue_flags.contains(flags)
                 && physical
                     .surface_support(queue_family_index as u32, &surface)
                     .unwrap_or(false)

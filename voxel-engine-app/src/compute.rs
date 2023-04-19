@@ -1,7 +1,7 @@
 use crate::allocators::Allocators;
 use std::sync::Arc;
 use voxel_engine_shader::{CameraMatrices, OctreeNode};
-use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
+use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer};
 use vulkano::descriptor_set::allocator::StandardDescriptorSetAlloc;
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::device::{Device, Queue};
@@ -10,19 +10,20 @@ use vulkano::image::view::{ImageView, ImageViewCreateInfo};
 use vulkano::image::{
     ImageAccess, ImageAspects, ImageDimensions, ImageSubresourceRange, ImageUsage, StorageImage,
 };
+use vulkano::memory::allocator::{AllocationCreateInfo, MemoryUsage};
 use vulkano::pipeline::{ComputePipeline, Pipeline};
 use vulkano::shader::ShaderModule;
 use winit::dpi::PhysicalSize;
 
 const SHADER_BYTES: &[u8] = include_bytes!(env!("voxel_engine_shader.spv"));
 
-type OctreeBuffer = CpuAccessibleBuffer<[OctreeNode]>;
-type CameraBuffer = CpuAccessibleBuffer<CameraMatrices>;
+type OctreeBuffer = Subbuffer<[OctreeNode]>;
+type CameraBuffer = Subbuffer<CameraMatrices>;
 
 pub struct Compute {
     pub pipeline: Arc<ComputePipeline>,
-    pub camera_buffer: Arc<CameraBuffer>,
-    pub octree_buffer: Arc<OctreeBuffer>,
+    pub camera_buffer: CameraBuffer,
+    pub octree_buffer: OctreeBuffer,
     pub render_image: Arc<StorageImage>,
     pub render_image_view: Arc<ImageView<StorageImage>>,
     pub render_image_set: Arc<PersistentDescriptorSet<StandardDescriptorSetAlloc>>,
@@ -76,27 +77,33 @@ fn create_pipeline(device: &Arc<Device>, shader: Arc<ShaderModule>) -> Arc<Compu
     .unwrap()
 }
 
-fn create_camera_buffer(allocators: &Allocators) -> Arc<CameraBuffer> {
-    CpuAccessibleBuffer::from_data(
+fn create_camera_buffer(allocators: &Allocators) -> CameraBuffer {
+    Buffer::from_data(
         &allocators.memory,
-        BufferUsage {
-            uniform_buffer: true,
+        BufferCreateInfo {
+            usage: BufferUsage::UNIFORM_BUFFER,
             ..Default::default()
         },
-        false,
+        AllocationCreateInfo {
+            usage: MemoryUsage::Upload,
+            ..Default::default()
+        },
         CameraMatrices::default(),
     )
     .unwrap()
 }
 
-fn create_octree_buffer(octree: Vec<OctreeNode>, allocators: &Allocators) -> Arc<OctreeBuffer> {
-    CpuAccessibleBuffer::from_iter(
+fn create_octree_buffer(octree: Vec<OctreeNode>, allocators: &Allocators) -> OctreeBuffer {
+    Buffer::from_iter(
         &allocators.memory,
-        BufferUsage {
-            storage_buffer: true,
+        BufferCreateInfo {
+            usage: BufferUsage::STORAGE_BUFFER,
             ..Default::default()
         },
-        false,
+        AllocationCreateInfo {
+            usage: MemoryUsage::Upload,
+            ..Default::default()
+        },
         octree.into_iter(),
     )
     .unwrap()
@@ -125,16 +132,9 @@ fn create_render_image_view(render_image: &Arc<StorageImage>) -> Arc<ImageView<S
         render_image.clone(),
         ImageViewCreateInfo {
             format: Some(render_image.format()),
-            usage: ImageUsage {
-                transfer_src: true,
-                storage: true,
-                ..Default::default()
-            },
+            usage: ImageUsage::TRANSFER_SRC | ImageUsage::STORAGE,
             subresource_range: ImageSubresourceRange {
-                aspects: ImageAspects {
-                    color: true,
-                    ..Default::default()
-                },
+                aspects: ImageAspects::COLOR,
                 mip_levels: 0..1,
                 array_layers: 0..1,
             },
@@ -147,8 +147,8 @@ fn create_render_image_view(render_image: &Arc<StorageImage>) -> Arc<ImageView<S
 fn create_render_image_set(
     pipeline: &Arc<ComputePipeline>,
     render_image_view: &Arc<ImageView<StorageImage>>,
-    camera_buffer: &Arc<CameraBuffer>,
-    octree_buffer: &Arc<OctreeBuffer>,
+    camera_buffer: &CameraBuffer,
+    octree_buffer: &OctreeBuffer,
     allocators: &Allocators,
 ) -> Arc<PersistentDescriptorSet<StandardDescriptorSetAlloc>> {
     let pipeline_layout = pipeline.layout().set_layouts().get(0).unwrap();
