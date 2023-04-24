@@ -22,7 +22,7 @@ pub fn create_swapchain(
         .surface_formats(surface, Default::default())
         .unwrap()
         .iter()
-        .find(|(f, c)| *f == Format::B8G8R8A8_SRGB)
+        .find(|(f, _c)| *f == Format::B8G8R8A8_SRGB)
         .unwrap();
 
     Swapchain::new(

@@ -1,9 +1,6 @@
 use crate::gpu_model::{find_gpu_model, GpuModel};
 use std::sync::Arc;
-use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
-use vulkano::device::{
-    Device, DeviceCreateInfo, DeviceExtensions, Features, Queue, QueueCreateInfo,
-};
+
 use vulkano::instance::{Instance, InstanceCreateInfo};
 use vulkano::swapchain::Surface;
 use vulkano::VulkanLibrary;
@@ -22,7 +19,7 @@ impl Context {
         let library = VulkanLibrary::new().expect("Failed to load vulkan library");
 
         let enabled_extensions = vulkano_win::required_extensions(&library);
-        let enabled_layers = ["VK_LAYER_LUNARG_monitor"];
+        let _enabled_layers = ["VK_LAYER_LUNARG_monitor"];
 
         let instance = Instance::new(
             library,

@@ -1,5 +1,5 @@
 use std::f32::consts::PI;
-use voxel_engine_shader::glam::{Mat4, Vec2, Vec3, Vec4, Vec4Swizzles};
+use voxel_engine_shader::glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use voxel_engine_shader::CameraMatrices;
 use winit::dpi::{LogicalSize, PhysicalPosition};
 

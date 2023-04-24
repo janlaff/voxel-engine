@@ -10,7 +10,7 @@ use vulkano::image::{ImageAccess, StorageImage, SwapchainImage};
 use vulkano::pipeline::{ComputePipeline, Pipeline, PipelineBindPoint};
 
 pub fn record_command_buffers(
-    device: &Arc<Device>,
+    _device: &Arc<Device>,
     queue: &Arc<Queue>,
     pipeline: &Arc<ComputePipeline>,
     images: &Vec<Arc<SwapchainImage>>,

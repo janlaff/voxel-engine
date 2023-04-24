@@ -16,20 +16,20 @@ use compute::*;
 use context::*;
 use mouse::*;
 use std::cell::RefCell;
-use std::sync::Arc;
+
 use swapchain::*;
 
-use voxel_engine_shader::glam::{vec3, Vec3};
-use voxel_engine_shader::{OctreeNode, Ray};
+use voxel_engine_shader::glam::Vec3;
+use voxel_engine_shader::OctreeNode;
 use vulkano::swapchain::{
     AcquireError, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
 };
 use vulkano::sync;
 use vulkano::sync::{FlushError, GpuFuture};
-use winit::dpi::PhysicalPosition;
-use winit::event::{ElementState, Event, MouseButton, WindowEvent};
+
+use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::{CursorIcon, WindowBuilder};
+use winit::window::WindowBuilder;
 
 fn main() {
     run_app();
